@@ -2,6 +2,7 @@
 import { ROUND_LABELS, mmss, makeChannel, escapeHtml } from "./shared.js";
 
 const chan = makeChannel();
+let _scoreVisible = false; // tracks whether scoreboard is currently shown (for bar animation)
 
 const el = {
   body: document.body,
@@ -109,9 +110,13 @@ function render(s) {
   }
 
   if (isScore) {
-    renderScores(s.teams);
+    // animate bars only when the scoreboard first appears, not on every tick
+    const justOpened = !_scoreVisible;
+    _scoreVisible = true;
+    renderScores(s.teams, justOpened);
     return;
   }
+  _scoreVisible = false;
 
   // question
   el.roundpill.textContent = "Round " + (s.roundIndex + 1);
@@ -128,7 +133,7 @@ function render(s) {
   el.answerText.textContent = s.answer || "";
 }
 
-function renderScores(teams) {
+function renderScores(teams, animate) {
   const sorted = [...teams].sort((a, b) => b.score - a.score);
   const lead = sorted.length ? sorted[0].score : 0;
   if (!sorted.length) {
@@ -144,13 +149,13 @@ function renderScores(teams) {
       // standard competition ranking: tied teams share the same rank number
       let rank = i + 1;
       if (i > 0 && sorted[i - 1].score === t.score) {
-        // find the rank of the first team with this score
         rank = sorted.findIndex((x) => x.score === t.score) + 1;
       }
-      // bar opacity scales with score so equal scores look equal
       const opacity = lead > 0 ? (0.45 + 0.55 * (t.score / lead)) : 0.3;
+      // when animating, start at width 0 then grow to target on next frame
+      const startW = animate ? 0 : pct;
       return `
-        <div class="b-scorerow">
+        <div class="b-scorerow" style="${animate ? `animation: scoreRowIn .4s ease ${i * 0.08}s both;` : ""}">
           <span class="b-rank ${leading ? "first" : ""}">${rank}</span>
           <div class="b-barcol">
             <div class="b-bartop">
@@ -158,12 +163,20 @@ function renderScores(teams) {
               <span class="b-scoreval ${leading ? "lead" : ""}">${t.score}</span>
             </div>
             <div class="b-bartrack">
-              <div class="b-barfill" style="width:${pct}%;opacity:${opacity}"></div>
+              <div class="b-barfill" data-target="${pct}" style="width:${startW}%;opacity:${opacity}"></div>
             </div>
           </div>
         </div>`;
     })
     .join("");
+  if (animate) {
+    // grow bars to target width after a frame so the transition kicks in
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.scorelist.querySelectorAll(".b-barfill").forEach((bar) => {
+        bar.style.width = bar.dataset.target + "%";
+      });
+    }));
+  }
 }
 
 chan.on((msg) => {
