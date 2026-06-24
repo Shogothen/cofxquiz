@@ -93,6 +93,8 @@ function render(s) {
 
   if (isFinal) {
     const intro = !!s.finalIntro;
+    const fhost = document.getElementById("b-final-host");
+    if (fhost) fhost.style.display = intro ? "block" : "none";
     el.finalNameA.textContent = s.finalTeamA || "Team A";
     el.finalNameB.textContent = s.finalTeamB || "Team B";
     el.finalScoreA.textContent = s.finalScoreA ?? 0;

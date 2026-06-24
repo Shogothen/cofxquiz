@@ -90,9 +90,33 @@
     body.connected .b-waiting { display: none; }
 
     /* start & round intro screens */
-    .b-intro { display: none; flex-direction: column; align-items: center;
-      justify-content: center; text-align: center; height: 100%; gap: min(2.5vh, 22px); }
+    .b-intro { position: relative; display: none; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; height: 100%; gap: min(2.5vh, 22px);
+      padding-right: min(30vw, 420px); }
     .b-intro.show { display: flex; }
+    /* text content stays clear of the host on the right */
+    .b-intro > .b-intro-kicker,
+    .b-intro > .b-intro-title,
+    .b-intro > .b-intro-sub,
+    .b-intro > .b-trophy,
+    .b-intro > .b-runnerup { max-width: min(64vw, 880px); position: relative; z-index: 2; }
+    /* quizmaster host figure — own zone on the right, never over the text */
+    .b-host { pointer-events: none; user-select: none; }
+    .b-host-side { position: absolute; right: max(1vw, 12px); bottom: 0;
+      height: min(66vh, 560px); width: auto; object-fit: contain;
+      filter: drop-shadow(0 12px 30px rgba(0,0,0,0.12));
+      animation: hostIn .5s cubic-bezier(.2,.8,.3,1.2); z-index: 1; }
+    @keyframes hostIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 1100px) { .b-host-side { height: 44vh; right: 0; opacity: 0.85; }
+      .b-intro > .b-intro-title { max-width: 70vw; } }
+    .b-final-intro-note { text-align: center; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace; font-size: clamp(13px,1.5vw,20px);
+      letter-spacing: 0.1em; }
+    .b-host-final { position: absolute; right: max(2vw, 24px); bottom: 0;
+      height: min(54vh, 460px); width: auto; object-fit: contain;
+      filter: drop-shadow(0 12px 30px rgba(0,0,0,0.12));
+      animation: hostIn .5s cubic-bezier(.2,.8,.3,1.2); z-index: 1; }
+    @media (max-width: 1100px) { .b-host-final { height: 36vh; right: 0; opacity: 0.85; } }
     .b-intro-kicker { font-family: 'JetBrains Mono', monospace; font-weight: 600;
       font-size: clamp(14px, 1.8vw, 24px); letter-spacing: 0.22em; text-transform: uppercase; }
     .b-intro-title { font-weight: 800; font-size: clamp(44px, 8vw, 120px); line-height: 1.02;
@@ -147,6 +171,7 @@
 
     <!-- start screen -->
     <div class="b-intro" id="b-startview">
+      <img class="b-host b-host-side" src="assets/host/host-mic.png" alt="" />
       <span class="b-intro-kicker grad-text">Welcome</span>
       <h1 class="b-intro-title">Cofinity-X<br>Pub Quiz Night</h1>
       <p class="b-intro-sub">Grab a drink, find your team. We're about to begin.</p>
@@ -154,12 +179,14 @@
 
     <!-- round intro screen -->
     <div class="b-intro" id="b-roundintroview">
+      <img class="b-host b-host-side" src="assets/host/host-finger.png" alt="" />
       <span class="b-intro-kicker grad-text" id="b-roundintro-num">Round 1</span>
       <h1 class="b-intro-title" id="b-roundintro-title">Warm-Up</h1>
     </div>
 
     <!-- winner screen -->
     <div class="b-intro" id="b-winnerview">
+      <img class="b-host b-host-side" src="assets/host/host-trophy.png" alt="" />
       <span class="b-intro-kicker grad-text">Champions</span>
       <div class="b-trophy">🏆</div>
       <h1 class="b-intro-title" id="b-winner-name">—</h1>
@@ -194,6 +221,7 @@
 
     <!-- final / buzzer view -->
     <div class="b-finalview" id="b-finalview">
+      <img class="b-host b-host-final" id="b-final-host" src="assets/host/host-mic2.png" alt="" style="display:none" />
       <div class="b-final-duel">
         <div class="b-final-team" id="b-final-team-a">
           <span class="b-final-team-label">Team A</span>
