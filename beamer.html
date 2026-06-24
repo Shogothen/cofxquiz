@@ -37,6 +37,16 @@
 
     .b-question { font-weight: 700; font-size: clamp(32px, 5vw, 80px); line-height: 1.06;
       max-width: 20ch; margin: 0; letter-spacing: -0.03em; text-align: center; align-self: center; }
+    /* when a picture question is showing, question text shrinks and image leads */
+    .b-qview.has-image { grid-template-rows: auto auto 1fr auto; }
+    .b-qview.has-image .b-question { font-size: clamp(24px, 3.2vw, 44px); }
+    .b-image-wrap { align-self: center; display: none; justify-content: center; align-items: center;
+      width: 100%; }
+    .b-qview.has-image .b-image-wrap { display: flex; }
+    .b-image { max-height: 46vh; max-width: min(70vw, 760px); object-fit: contain;
+      border-radius: 18px; background: #fff; padding: 14px;
+      box-shadow: 0 20px 56px rgba(0,0,0,0.10); border: 1px solid var(--line);
+      animation: answerIn .35s ease; }
 
     .b-answer { align-self: start; display: none; flex-direction: column; align-items: center;
       gap: 10px; padding: 18px 44px; border-radius: 20px; background: #fff;
@@ -100,6 +110,9 @@
         <div class="b-timer" id="b-timer">01:00</div>
       </div>
       <p class="b-question" id="b-question">Get ready…</p>
+      <div class="b-image-wrap" id="b-image-wrap">
+        <img class="b-image" id="b-image" alt="" />
+      </div>
       <div class="b-answer" id="b-answer">
         <span class="b-answer-label">Answer</span>
         <span class="b-answer-text grad-text" id="b-answer-text"></span>

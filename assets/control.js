@@ -24,10 +24,11 @@ const $ = (id) => document.getElementById(id);
 const cur = () => questions[qIndex] || { q: "", a: "", round: 0 };
 const activeQ = () => (overrideQ.trim() ? overrideQ : cur().q);
 const activeA = () => (overrideQ.trim() ? overrideA : cur().a);
+const activeImg = () => (overrideQ.trim() ? "" : (cur().img || ""));
 
 function snapshot() {
   return {
-    teams, question: activeQ(), answer: activeA(),
+    teams, question: activeQ(), answer: activeA(), img: activeImg(),
     roundIndex, timer, revealed, screen,
   };
 }
@@ -47,7 +48,8 @@ function renderPresets() {
 }
 function renderCurrent() {
   $("q-count").textContent = `${qIndex + 1} / ${questions.length}`;
-  $("cur-q").textContent = activeQ() || "—";
+  const img = activeImg();
+  $("cur-q").textContent = (img ? "🖼 " : "") + (activeQ() || "—");
   $("cur-a").textContent = activeA() || "—";
   const btn = $("btn-reveal");
   btn.textContent = revealed ? "Hide answer" : "Reveal answer on screen";
@@ -192,6 +194,7 @@ function renderEditor() {
         <textarea data-field="q" placeholder="Question">${escapeHtml(q.q)}</textarea>
         <textarea data-field="a" placeholder="Answer">${escapeHtml(q.a)}</textarea>
         <button class="btn-x" data-del="${i}">✕</button>
+        <input type="text" data-field="img" class="q-editor-img" placeholder="Image URL (optional — shown on beamer)" value="${escapeHtml(q.img || "")}" />
       </div>`).join("") +
     `<button class="editor-add" id="editor-add">+ Add question</button>`;
   draft.forEach((q, i) => {
@@ -216,7 +219,13 @@ $("editor-body").addEventListener("click", (e) => {
   if (del) { draft.splice(+del.dataset.del, 1); renderEditor(); }
 });
 $("editor-save").addEventListener("click", () => {
-  questions = draft.filter((q) => q.q.trim() || q.a.trim());
+  questions = draft
+    .filter((q) => q.q.trim() || q.a.trim() || (q.img && q.img.trim()))
+    .map((q) => {
+      const out = { round: q.round, q: q.q, a: q.a };
+      if (q.img && q.img.trim()) out.img = q.img.trim();
+      return out;
+    });
   if (!questions.length) questions = [{ round: 0, q: "", a: "" }];
   saveQuestions(questions);
   if (qIndex >= questions.length) qIndex = questions.length - 1;

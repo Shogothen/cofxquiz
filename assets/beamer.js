@@ -12,6 +12,8 @@ const el = {
   scoreview: document.getElementById("b-scoreview"),
   timer: document.getElementById("b-timer"),
   question: document.getElementById("b-question"),
+  imageWrap: document.getElementById("b-image-wrap"),
+  image: document.getElementById("b-image"),
   answer: document.getElementById("b-answer"),
   answerText: document.getElementById("b-answer-text"),
   scorelist: document.getElementById("b-scorelist"),
@@ -36,6 +38,14 @@ function render(s) {
     el.roundpill.textContent = "Round " + (s.roundIndex + 1);
     el.roundname.textContent = ROUND_LABELS[s.roundIndex] || "Round";
     el.question.textContent = s.question || "Get ready…";
+    // image (picture round)
+    if (s.img) {
+      if (el.image.getAttribute("src") !== s.img) el.image.src = s.img;
+      el.qview.classList.add("has-image");
+    } else {
+      el.image.removeAttribute("src");
+      el.qview.classList.remove("has-image");
+    }
     el.answer.classList.toggle("show", !!s.revealed);
     el.answerText.textContent = s.answer || "";
   }
