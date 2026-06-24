@@ -1,6 +1,6 @@
 // ── control.js — moderator surface ────────────────────────────────────────
 import {
-  ROUND_LABELS, POINTS_PER_CORRECT, uid, mmss, makeChannel,
+  ROUND_LABELS, FINAL_QUESTIONS, POINTS_PER_CORRECT, uid, mmss, makeChannel,
   loadQuestions, saveQuestions, loadTeams, saveTeams, escapeHtml,
 } from "./shared.js";
 
@@ -15,9 +15,14 @@ let timer = 60;
 let timerId = null;
 let running = false;
 let revealed = false;
-let screen = "question"; // "question" | "scoreboard"
+let screen = "question"; // "question" | "scoreboard" | "final"
 let overrideQ = "";
 let overrideA = "";
+
+// ── final-round state ──
+let finalIndex = 0;
+let finalRevealed = false;
+let finalTeams = [null, null]; // ids of the two finalists
 
 // ── dom ──
 const $ = (id) => document.getElementById(id);
@@ -25,8 +30,24 @@ const cur = () => questions[qIndex] || { q: "", a: "", round: 0 };
 const activeQ = () => (overrideQ.trim() ? overrideQ : cur().q);
 const activeA = () => (overrideQ.trim() ? overrideA : cur().a);
 const activeImg = () => (overrideQ.trim() ? "" : (cur().img || ""));
+const finalTeamName = (i) => {
+  const t = teams.find((x) => x.id === finalTeams[i]);
+  return t ? t.name : `Team ${i + 1}`;
+};
 
 function snapshot() {
+  if (screen === "final") {
+    const fq = FINAL_QUESTIONS[finalIndex] || { q: "", a: "" };
+    const ta = teams.find((x) => x.id === finalTeams[0]);
+    const tb = teams.find((x) => x.id === finalTeams[1]);
+    return {
+      screen: "final", timer,
+      finalQuestion: fq.q, finalAnswer: fq.a, finalRevealed,
+      finalIndex, finalTotal: FINAL_QUESTIONS.length,
+      finalTeamA: finalTeamName(0), finalTeamB: finalTeamName(1),
+      finalScoreA: ta ? ta.score : 0, finalScoreB: tb ? tb.score : 0,
+    };
+  }
   return {
     teams, question: activeQ(), answer: activeA(), img: activeImg(),
     roundIndex, timer, revealed, screen,
@@ -64,6 +85,30 @@ function renderTimer() {
 function renderScreenSeg() {
   document.querySelectorAll("#seg-screen button").forEach((b) =>
     b.classList.toggle("on", b.dataset.screen === screen));
+  // show the final control panel only when in final mode
+  $("final-section").style.display = screen === "final" ? "" : "none";
+  if (screen === "final") renderFinal();
+}
+
+function renderFinalSelects() {
+  const opts = teams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+  ["final-pick-a", "final-pick-b"].forEach((id, i) => {
+    const sel = $(id);
+    sel.innerHTML = opts;
+    if (finalTeams[i]) sel.value = finalTeams[i];
+    else if (teams[i]) { finalTeams[i] = teams[i].id; sel.value = teams[i].id; }
+  });
+}
+function renderFinal() {
+  const fq = FINAL_QUESTIONS[finalIndex] || { q: "", a: "" };
+  $("final-count").textContent = `${finalIndex + 1} / ${FINAL_QUESTIONS.length}`;
+  $("final-cur-q").textContent = fq.q || "—";
+  $("final-cur-a").textContent = fq.a || "—";
+  const rb = $("final-reveal");
+  rb.textContent = finalRevealed ? "Hide answer" : "Reveal answer on screen";
+  rb.classList.toggle("on", finalRevealed);
+  $("final-award-a").textContent = `+1 ◀ ${finalTeamName(0)}`;
+  $("final-award-b").textContent = `${finalTeamName(1)} ▶ +1`;
 }
 function renderTeams() {
   const sorted = [...teams].sort((a, b) => b.score - a.score);
@@ -121,7 +166,24 @@ function stopTimer() {
 $("seg-screen").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-screen]");
   if (!b) return;
-  screen = b.dataset.screen; renderScreenSeg(); broadcast();
+  screen = b.dataset.screen;
+  if (screen === "final") { renderFinalSelects(); stopTimer(); }
+  renderScreenSeg(); broadcast();
+});
+
+// ── final-round events ──
+$("final-pick-a").addEventListener("change", (e) => { finalTeams[0] = e.target.value; renderFinal(); broadcast(); });
+$("final-pick-b").addEventListener("change", (e) => { finalTeams[1] = e.target.value; renderFinal(); broadcast(); });
+$("final-prev").addEventListener("click", () => { finalIndex = Math.max(0, finalIndex - 1); finalRevealed = false; renderFinal(); broadcast(); });
+$("final-next").addEventListener("click", () => { finalIndex = Math.min(FINAL_QUESTIONS.length - 1, finalIndex + 1); finalRevealed = false; renderFinal(); broadcast(); });
+$("final-reveal").addEventListener("click", () => { finalRevealed = !finalRevealed; renderFinal(); broadcast(); });
+$("final-award-a").addEventListener("click", () => {
+  const t = teams.find((x) => x.id === finalTeams[0]);
+  if (t) { t.score += POINTS_PER_CORRECT; saveTeams(teams); renderFinal(); broadcast(); }
+});
+$("final-award-b").addEventListener("click", () => {
+  const t = teams.find((x) => x.id === finalTeams[1]);
+  if (t) { t.score += POINTS_PER_CORRECT; saveTeams(teams); renderFinal(); broadcast(); }
 });
 $("round-chips").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-round]");

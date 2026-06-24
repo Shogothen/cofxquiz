@@ -24,6 +24,7 @@
         <div class="seg" id="seg-screen">
           <button data-screen="question" class="on">Question</button>
           <button data-screen="scoreboard">Scoreboard</button>
+          <button data-screen="final">Final</button>
         </div>
         <div class="round-block">
           <span class="mini">Round</span>
@@ -72,6 +73,34 @@
           <button class="pill-dark" id="add-team">Add</button>
         </div>
         <div class="team-list" id="team-list"></div>
+      </div>
+
+      <!-- Final round -->
+      <div class="section" id="final-section" style="display:none">
+        <div class="section-title">Final — buzzer round</div>
+        <div class="final-pick">
+          <span class="mini">Finalists (top 2)</span>
+          <div class="final-selects">
+            <select id="final-pick-a"></select>
+            <span class="final-vs-mini">vs</span>
+            <select id="final-pick-b"></select>
+          </div>
+        </div>
+        <div class="qnav" style="margin-top:14px">
+          <button class="pill-white" id="final-prev">‹ Prev</button>
+          <span class="qcount" id="final-count">1 / 18</span>
+          <button class="pill-white" id="final-next">Next ›</button>
+        </div>
+        <div class="cur-box">
+          <span class="mini">On screen now</span>
+          <p class="cur-q" id="final-cur-q">—</p>
+          <p class="cur-a">Answer · <b id="final-cur-a">—</b></p>
+        </div>
+        <button class="reveal-btn" id="final-reveal">Reveal answer on screen</button>
+        <div class="final-award">
+          <button class="final-award-btn" id="final-award-a">+1 ◀ Team A</button>
+          <button class="final-award-btn" id="final-award-b">Team B ▶ +1</button>
+        </div>
       </div>
     </div>
 

@@ -88,6 +88,32 @@
     .b-waiting h2 { font-weight: 700; font-size: 24px; letter-spacing: -0.02em; }
     .b-waiting p { color: var(--muted); font-size: 14px; max-width: 42ch; line-height: 1.6; }
     body.connected .b-waiting { display: none; }
+
+    /* final / buzzer view */
+    .b-finalview { display: none; flex-direction: column; height: 100%;
+      justify-content: center; gap: min(5vh, 44px); }
+    .b-finalview.show { display: flex; }
+    .b-final-duel { display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: min(3vw, 40px); }
+    .b-final-team { display: flex; flex-direction: column; align-items: center;
+      gap: 6px; padding: min(3vh,28px) min(2vw,28px); border-radius: 20px;
+      background: #fff; border: 1px solid var(--line); box-shadow: 0 14px 44px rgba(0,0,0,0.07); }
+    .b-final-team-label { font-family: 'JetBrains Mono', monospace; font-size: clamp(10px,1vw,13px);
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+    .b-final-team-name { font-weight: 700; font-size: clamp(22px,3vw,46px); letter-spacing: -0.02em;
+      text-align: center; line-height: 1.1; }
+    .b-final-team-score { font-family: 'JetBrains Mono', monospace; font-weight: 600;
+      font-size: clamp(44px,7vw,104px); line-height: 1; font-variant-numeric: tabular-nums;
+      background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .b-final-vs { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .b-final-buzzer { font-family: 'JetBrains Mono', monospace; font-weight: 600;
+      font-size: clamp(12px,1.4vw,18px); letter-spacing: 0.3em; color: #fff;
+      background: var(--grad); padding: 6px 16px; border-radius: 999px; }
+    .b-final-vs-x { font-weight: 800; font-size: clamp(28px,4vw,60px); color: var(--muted); line-height: 1; }
+    .b-final-counter { font-size: clamp(11px,1.2vw,15px); color: var(--muted); letter-spacing: 0.1em; }
+    .b-final-qbox { display: flex; flex-direction: column; align-items: center; gap: min(3vh,28px); text-align: center; }
+    .b-final-question { font-weight: 700; font-size: clamp(28px,4vw,60px); line-height: 1.12;
+      max-width: 24ch; margin: 0; letter-spacing: -0.02em; }
   </style>
 </head>
 <body>
@@ -126,6 +152,34 @@
         <span class="b-scoresub grad-text">Live standings</span>
       </div>
       <div class="b-scorelist" id="b-scorelist"></div>
+    </div>
+
+    <!-- final / buzzer view -->
+    <div class="b-finalview" id="b-finalview">
+      <div class="b-final-duel">
+        <div class="b-final-team" id="b-final-team-a">
+          <span class="b-final-team-label">Team A</span>
+          <span class="b-final-team-name" id="b-final-name-a">Team A</span>
+          <span class="b-final-team-score" id="b-final-score-a">0</span>
+        </div>
+        <div class="b-final-vs">
+          <span class="b-final-buzzer">BUZZER</span>
+          <span class="b-final-vs-x">×</span>
+          <span class="b-final-counter mono" id="b-final-counter">1 / 18</span>
+        </div>
+        <div class="b-final-team" id="b-final-team-b">
+          <span class="b-final-team-label">Team B</span>
+          <span class="b-final-team-name" id="b-final-name-b">Team B</span>
+          <span class="b-final-team-score" id="b-final-score-b">0</span>
+        </div>
+      </div>
+      <div class="b-final-qbox">
+        <p class="b-final-question" id="b-final-question">Get ready…</p>
+        <div class="b-answer" id="b-final-answer">
+          <span class="b-answer-label">Answer</span>
+          <span class="b-answer-text grad-text" id="b-final-answer-text"></span>
+        </div>
+      </div>
     </div>
   </div>
 

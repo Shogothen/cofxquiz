@@ -17,6 +17,16 @@ const el = {
   answer: document.getElementById("b-answer"),
   answerText: document.getElementById("b-answer-text"),
   scorelist: document.getElementById("b-scorelist"),
+  // final view
+  finalview: document.getElementById("b-finalview"),
+  finalNameA: document.getElementById("b-final-name-a"),
+  finalNameB: document.getElementById("b-final-name-b"),
+  finalScoreA: document.getElementById("b-final-score-a"),
+  finalScoreB: document.getElementById("b-final-score-b"),
+  finalCounter: document.getElementById("b-final-counter"),
+  finalQuestion: document.getElementById("b-final-question"),
+  finalAnswer: document.getElementById("b-final-answer"),
+  finalAnswerText: document.getElementById("b-final-answer-text"),
 };
 
 function render(s) {
@@ -26,7 +36,27 @@ function render(s) {
   el.timer.textContent = mmss(s.timer);
   el.timer.classList.toggle("low", s.timer <= 10 && s.timer > 0);
 
-  if (s.screen === "scoreboard") {
+  // reset all views first
+  const isFinal = s.screen === "final";
+  const isScore = s.screen === "scoreboard";
+
+  el.finalview.classList.toggle("show", isFinal);
+  if (isFinal) {
+    el.qview.style.display = "none";
+    el.scoreview.classList.remove("show");
+    el.roundtag.style.visibility = "hidden";
+    el.finalNameA.textContent = s.finalTeamA || "Team A";
+    el.finalNameB.textContent = s.finalTeamB || "Team B";
+    el.finalScoreA.textContent = s.finalScoreA ?? 0;
+    el.finalScoreB.textContent = s.finalScoreB ?? 0;
+    el.finalCounter.textContent = `${(s.finalIndex ?? 0) + 1} / ${s.finalTotal ?? 0}`;
+    el.finalQuestion.textContent = s.finalQuestion || "Get ready…";
+    el.finalAnswer.classList.toggle("show", !!s.finalRevealed);
+    el.finalAnswerText.textContent = s.finalAnswer || "";
+    return;
+  }
+
+  if (isScore) {
     el.qview.style.display = "none";
     el.scoreview.classList.add("show");
     el.roundtag.style.visibility = "hidden";
