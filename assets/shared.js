@@ -60,15 +60,15 @@ export const DEFAULT_QUESTIONS = [
   { round: 3, q: "Which country is this outline?", a: "India",
     img: "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/in/512.png" },
 
-  // ── Round 5 · Around the World (hard) ──
-  { round: 4, q: "What is the only country that is also a continent?", a: "Australia" },
-  { round: 4, q: "Which African country was never colonised by Europeans?", a: "Ethiopia" },
-  { round: 4, q: "What is the capital of New Zealand?", a: "Wellington" },
-  { round: 4, q: "Which strait separates Europe and Africa at their closest?", a: "Gibraltar" },
-  { round: 4, q: "Lake Baikal, the deepest lake, is in which country?", a: "Russia" },
-  { round: 4, q: "Which two countries share the longest land border?", a: "USA Canada" },
-  { round: 4, q: "What is the most spoken native language in the world?", a: "Mandarin" },
-  { round: 4, q: "The Atacama, the driest desert, is mainly in which country?", a: "Chile" },
+  // ── Round 5 · Around the World (pop-culture mix, medium) ──
+  { round: 4, q: "Which company owns Instagram and WhatsApp?", a: "Meta" },
+  { round: 4, q: "Which video game is the best-selling of all time?", a: "Minecraft" },
+  { round: 4, q: "What is the highest-grossing animated film of all time?", a: "Inside Out 2" },
+  { round: 4, q: "Which rapper founded the fashion brand 'Yeezy'?", a: "Kanye" },
+  { round: 4, q: "In the 'Barbie' movie, who played Ken alongside Margot Robbie?", a: "Gosling" },
+  { round: 4, q: "What Japanese word describes the cute aesthetic in pop culture?", a: "Kawaii" },
+  { round: 4, q: "Which platform popularised the 'For You Page' (FYP)?", a: "TikTok" },
+  { round: 4, q: "Which 2016 mobile game had people walking around catching creatures?", a: "Pokémon Go" },
 
   // ── Round 6 · Brain Stretch (hardest before the final) ──
   { round: 5, q: "What is the most abundant element in the universe?", a: "Hydrogen" },
