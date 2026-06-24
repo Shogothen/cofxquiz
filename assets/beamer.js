@@ -1,8 +1,12 @@
 // ── beamer.js — render-only surface, driven by the control window ─────────
-import { ROUND_LABELS, mmss, makeChannel, escapeHtml } from "./shared.js";
+import { ROUND_LABELS, HOST_LINES, AMBIENT_FACTS, mmss, makeChannel, escapeHtml } from "./shared.js";
 
 const chan = makeChannel();
 let _scoreVisible = false; // tracks whether scoreboard is currently shown (for bar animation)
+let _lastScreen = null;    // tracks screen changes so one-liners only reroll on entry
+let _ambientTimer = null;  // rotates ambient facts
+
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 const el = {
   body: document.body,
@@ -17,6 +21,11 @@ const el = {
   winnerName: document.getElementById("b-winner-name"),
   winnerScore: document.getElementById("b-winner-score"),
   winnerRunnerup: document.getElementById("b-winner-runnerup"),
+  ambientview: document.getElementById("b-ambientview"),
+  ambientFact: document.getElementById("b-ambient-fact"),
+  bubbleStart: document.getElementById("b-bubble-start"),
+  bubbleRound: document.getElementById("b-bubble-round"),
+  bubbleWinner: document.getElementById("b-bubble-winner"),
   qview: document.getElementById("b-qview"),
   scoreview: document.getElementById("b-scoreview"),
   timer: document.getElementById("b-timer"),
@@ -53,6 +62,11 @@ function render(s) {
   const isFinal = sc === "final";
   const isScore = sc === "scoreboard";
   const isQuestion = sc === "question";
+  const isAmbient = sc === "ambient";
+
+  // detect a fresh screen entry (so one-liners/facts only change on entry)
+  const screenChanged = sc !== _lastScreen;
+  _lastScreen = sc;
 
   // toggle all views
   el.startview.classList.toggle("show", isStart);
@@ -60,8 +74,32 @@ function render(s) {
   el.winnerview.classList.toggle("show", isWinner);
   el.finalview.classList.toggle("show", isFinal);
   el.scoreview.classList.toggle("show", isScore);
+  el.ambientview.classList.toggle("show", isAmbient);
   el.qview.style.display = isQuestion ? "grid" : "none";
   el.roundtag.style.visibility = isQuestion ? "visible" : "hidden";
+
+  // ambient fact rotation: start when entering, stop when leaving
+  if (isAmbient) {
+    if (screenChanged) {
+      el.ambientFact.textContent = pick(AMBIENT_FACTS);
+      if (_ambientTimer) clearInterval(_ambientTimer);
+      _ambientTimer = setInterval(() => {
+        el.ambientFact.style.animation = "none";
+        void el.ambientFact.offsetWidth; // reflow to restart animation
+        el.ambientFact.textContent = pick(AMBIENT_FACTS);
+        el.ambientFact.style.animation = "";
+      }, 8000);
+    }
+    return;
+  } else if (_ambientTimer) {
+    clearInterval(_ambientTimer); _ambientTimer = null;
+  }
+
+  // host one-liners — reroll only when the screen is freshly entered
+  if (screenChanged) {
+    if (isStart) el.bubbleStart.textContent = pick(HOST_LINES.start);
+    if (isRoundIntro) el.bubbleRound.textContent = pick(HOST_LINES.round);
+  }
 
   if (isStart) return;
 
@@ -83,11 +121,13 @@ function render(s) {
       el.winnerName.innerHTML = `<span class="b-winner-name-grad">${tied.map((t) => escapeHtml(t.name)).join(" & ")}</span>`;
       el.winnerScore.textContent = `It's a tie at ${top.score} points!`;
       el.winnerRunnerup.textContent = "";
+      if (screenChanged) el.bubbleWinner.textContent = pick(HOST_LINES.winnerTie);
     } else {
       el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(top.name)}</span>`;
       el.winnerScore.textContent = `${top.score} points`;
       const second = sorted[1];
       el.winnerRunnerup.textContent = second ? `Runner-up: ${second.name} (${second.score})` : "";
+      if (screenChanged) el.bubbleWinner.textContent = pick(HOST_LINES.winnerSolo);
     }
     return;
   }

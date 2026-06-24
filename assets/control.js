@@ -58,6 +58,9 @@ function snapshot() {
   if (screen === "winner") {
     return { screen: "winner", teams, timer };
   }
+  if (screen === "ambient") {
+    return { screen: "ambient", timer };
+  }
   // question flow: start / round-intro / question
   if (mainStage === "start") {
     return { screen: "start", timer };

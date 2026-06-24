@@ -105,6 +105,54 @@ export const FINAL_QUESTIONS = [
 
 export const POINTS_PER_CORRECT = 1;
 
+// ── Host one-liners (sassy quizmaster) shown in a speech bubble ────────────
+export const HOST_LINES = {
+  start: [
+    "Pens ready. Egos optional.",
+    "Last chance to Google before we start.",
+    "May the least wrong team win.",
+    "I've seen the answers. You haven't. Let's go.",
+  ],
+  round: [
+    "Try to look confident. It won't help.",
+    "This round separates the bluffers from the legends.",
+    "No phones. I'm watching you.",
+    "Easy points ahead. Allegedly.",
+    "Don't overthink it. Or do. Your funeral.",
+  ],
+  final: [
+    "Two teams enter. One team brags forever.",
+    "Fingers on buzzers. Dignity aside.",
+    "This is where friendships end.",
+    "Buzz fast, think faster.",
+  ],
+  winnerSolo: [
+    "Champions. Insufferable until next time.",
+    "Worth bragging about. Briefly.",
+    "Someone had to win. Congrats, I guess.",
+  ],
+  winnerTie: [
+    "A tie? You couldn't make it easy for me?",
+    "Share the glory. How wholesome.",
+  ],
+};
+
+// ── Ambient 'Did you know?' facts for the break screen ────────────────────
+export const AMBIENT_FACTS = [
+  "Honey never spoils. Archaeologists found edible 3,000-year-old jars.",
+  "Octopuses have three hearts and blue blood.",
+  "A group of flamingos is called a 'flamboyance'.",
+  "Bananas are berries. Strawberries aren't.",
+  "The Eiffel Tower grows about 15 cm taller in summer.",
+  "There are more possible chess games than atoms in the universe.",
+  "Wombat poop is cube-shaped.",
+  "A bolt of lightning is five times hotter than the sun's surface.",
+  "Sharks existed before trees did.",
+  "The shortest war in history lasted about 38 minutes.",
+  "Scotland's national animal is the unicorn.",
+  "Your stomach gets a new lining every few days, or it would digest itself.",
+];
+
 const LS_QUESTIONS = "cxquiz.questions";
 const LS_TEAMS = "cxquiz.teams";
 

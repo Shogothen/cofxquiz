@@ -116,13 +116,29 @@
     .b-intro > .b-runnerup { max-width: min(64vw, 880px); position: relative; z-index: 2; }
     /* quizmaster host figure — own zone on the right, never over the text */
     .b-host { pointer-events: none; user-select: none; }
-    .b-host-side { position: absolute; right: max(1vw, 12px); bottom: 0;
-      height: min(66vh, 560px); width: auto; object-fit: contain;
-      filter: drop-shadow(0 12px 30px rgba(0,0,0,0.12));
-      animation: hostIn .5s cubic-bezier(.2,.8,.3,1.2); z-index: 1; }
+    .b-host-wrap.b-host-side { position: absolute; right: max(1vw, 12px); bottom: 0;
+      display: flex; flex-direction: column; align-items: center; z-index: 1;
+      animation: hostIn .5s cubic-bezier(.2,.8,.3,1.2); }
+    .b-host-wrap.b-host-side .b-host { height: min(60vh, 520px); width: auto; object-fit: contain;
+      filter: drop-shadow(0 12px 30px rgba(0,0,0,0.12)); }
+    .b-bubble { position: relative; max-width: 320px; margin-bottom: 14px;
+      background: #fff; color: var(--ink); border: 1px solid var(--line);
+      border-radius: 18px; padding: 14px 18px; font-weight: 600;
+      font-size: clamp(14px, 1.4vw, 19px); line-height: 1.35; text-align: center;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+      animation: bubbleIn .45s cubic-bezier(.2,.8,.3,1.3) .25s both; }
+    .b-bubble::after { content: ""; position: absolute; bottom: -9px; left: 50%;
+      transform: translateX(-50%); border-left: 10px solid transparent;
+      border-right: 10px solid transparent; border-top: 10px solid #fff; }
+    .b-bubble:empty { display: none; }
+    @keyframes bubbleIn { from { opacity: 0; transform: scale(0.8) translateY(8px); } to { opacity: 1; transform: none; } }
     @keyframes hostIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-    @media (max-width: 1100px) { .b-host-side { height: 44vh; right: 0; opacity: 0.85; }
-      .b-intro > .b-intro-title { max-width: 70vw; } }
+    @media (max-width: 1100px) {
+      .b-host-wrap.b-host-side { right: 0; opacity: 0.92; }
+      .b-host-wrap.b-host-side .b-host { height: 40vh; }
+      .b-bubble { max-width: 220px; font-size: 13px; padding: 10px 13px; }
+      .b-intro > .b-intro-title { max-width: 70vw; }
+    }
     .b-final-intro-note { text-align: center; color: var(--muted);
       font-family: 'JetBrains Mono', monospace; font-size: clamp(13px,1.5vw,20px);
       letter-spacing: 0.1em; }
@@ -136,6 +152,10 @@
     .b-intro-title { font-weight: 800; font-size: clamp(44px, 8vw, 120px); line-height: 1.02;
       letter-spacing: -0.04em; margin: 0; }
     .b-intro-sub { color: var(--muted); font-size: clamp(16px, 2vw, 26px); margin: 0; max-width: 28ch; }
+    .b-ambient-fact { font-weight: 700; font-size: clamp(28px, 3.6vw, 56px); line-height: 1.18;
+      letter-spacing: -0.02em; margin: 0; max-width: 18ch; position: relative; z-index: 2;
+      animation: factFade .6s ease; }
+    @keyframes factFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
     .b-trophy { font-size: clamp(60px, 10vw, 140px); line-height: 1;
       animation: answerIn .5s ease; }
     .b-runnerup { margin-top: min(3vh, 26px); font-family: 'JetBrains Mono', monospace;
@@ -190,7 +210,10 @@
 
     <!-- start screen -->
     <div class="b-intro" id="b-startview">
-      <img class="b-host b-host-side" src="assets/host/host-mic.png" alt="" />
+      <div class="b-host-wrap b-host-side">
+        <div class="b-bubble" id="b-bubble-start"></div>
+        <img class="b-host" src="assets/host/host-mic.png" alt="" />
+      </div>
       <span class="b-intro-kicker grad-text">Welcome</span>
       <h1 class="b-intro-title">Cofinity-X<br>Pub Quiz Night</h1>
       <p class="b-intro-sub">Grab a drink, find your team. We're about to begin.</p>
@@ -198,19 +221,35 @@
 
     <!-- round intro screen -->
     <div class="b-intro" id="b-roundintroview">
-      <img class="b-host b-host-side" src="assets/host/host-finger.png" alt="" />
+      <div class="b-host-wrap b-host-side">
+        <div class="b-bubble" id="b-bubble-round"></div>
+        <img class="b-host" src="assets/host/host-finger.png" alt="" />
+      </div>
       <span class="b-intro-kicker grad-text" id="b-roundintro-num">Round 1</span>
       <h1 class="b-intro-title" id="b-roundintro-title">Warm-Up</h1>
     </div>
 
     <!-- winner screen -->
     <div class="b-intro" id="b-winnerview">
-      <img class="b-host b-host-side" src="assets/host/host-trophy.png" alt="" />
+      <div class="b-host-wrap b-host-side">
+        <div class="b-bubble" id="b-bubble-winner"></div>
+        <img class="b-host" src="assets/host/host-trophy.png" alt="" />
+      </div>
       <span class="b-intro-kicker grad-text">Champions</span>
       <div class="b-trophy">🏆</div>
       <h1 class="b-intro-title" id="b-winner-name">—</h1>
       <p class="b-intro-sub" id="b-winner-score">—</p>
       <div class="b-runnerup" id="b-winner-runnerup"></div>
+    </div>
+
+    <!-- ambient / break screen -->
+    <div class="b-intro" id="b-ambientview">
+      <div class="b-host-wrap b-host-side">
+        <img class="b-host" src="assets/host/host-tablet.png" alt="" />
+      </div>
+      <span class="b-intro-kicker grad-text">Did you know?</span>
+      <p class="b-ambient-fact" id="b-ambient-fact">—</p>
+      <p class="b-intro-sub">Back in a moment. Grab a drink.</p>
     </div>
 
     <!-- question view -->
