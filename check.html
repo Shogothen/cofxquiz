@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Picture Round — Image Check</title>
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px; }
+  h1 { font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 16px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .card .imgbox { height: 150px; display: flex; align-items: center; justify-content: center;
+    background: var(--canvas); }
+  .card img { max-height: 140px; max-width: 100%; object-fit: contain; }
+  .card .meta { padding: 10px 12px; }
+  .card .ans { font-weight: 700; font-size: 14px; }
+  .badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px;
+    border-radius: 999px; display: inline-block; margin-top: 6px; }
+  .ok { background: #E4F6EC; color: #1E7A47; }
+  .fail { background: #FDE6E4; color: #B23227; }
+  .loading { background: var(--canvas); color: var(--muted); }
+  .summary { margin: 18px 0; padding: 12px 14px; border-radius: 10px; background: var(--canvas);
+    font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Picture Round — Image Check</h1>
+  <p class="lead">Run this once before the event (needs internet). Green = loads, red = broken.
+     Fix any red one in the control panel's "Edit questions" by pasting a new image URL.</p>
+  <div class="summary" id="summary">Checking images…</div>
+  <div class="grid2" id="grid"></div>
+</div>
+
+<script type="module">
+  import { DEFAULT_QUESTIONS, loadQuestions } from "./assets/shared.js";
+  // prefer the live saved set (what the tool will actually use), fall back to defaults
+  const all = loadQuestions();
+  const pics = all.filter(q => q.img);
+  const grid = document.getElementById("grid");
+  const summary = document.getElementById("summary");
+  let done = 0, ok = 0;
+
+  pics.forEach((q) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="imgbox"><img alt=""></div>
+      <div class="meta">
+        <div class="ans">${q.a}</div>
+        <span class="badge loading">checking…</span>
+      </div>`;
+    grid.appendChild(card);
+    const img = card.querySelector("img");
+    const badge = card.querySelector(".badge");
+    img.onload = () => { badge.textContent = "loads ✓"; badge.className = "badge ok"; ok++; tally(); };
+    img.onerror = () => { badge.textContent = "BROKEN ✕"; badge.className = "badge fail"; tally(); };
+    img.src = q.img;
+  });
+
+  function tally() {
+    done++;
+    if (done === pics.length) {
+      summary.textContent = `${ok} of ${pics.length} images load. ` +
+        (ok === pics.length ? "All good — you're set." : "Fix the red ones before the event.");
+      summary.style.background = ok === pics.length ? "#E4F6EC" : "#FDE6E4";
+    }
+  }
+  if (!pics.length) summary.textContent = "No picture-round images found.";
+</script>
+</body>
+</html>
