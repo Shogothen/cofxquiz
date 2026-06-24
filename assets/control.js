@@ -16,11 +16,13 @@ let timerId = null;
 let running = false;
 let revealed = false;
 let screen = "question"; // "question" | "scoreboard" | "final"
+let mainStage = "start"; // "start" | "round-intro" | "question" — within the non-final flow
+let introRound = 0; // which round the round-intro is showing
 let overrideQ = "";
 let overrideA = "";
 
 // ── final-round state ──
-let finalIndex = 0;
+let finalIndex = -1; // -1 = intro screen (no question yet)
 let finalRevealed = false;
 let finalTeams = [null, null]; // ids of the two finalists
 
@@ -37,20 +39,31 @@ const finalTeamName = (i) => {
 
 function snapshot() {
   if (screen === "final") {
-    const fq = FINAL_QUESTIONS[finalIndex] || { q: "", a: "" };
+    const intro = finalIndex < 0;
+    const fq = intro ? { q: "", a: "" } : (FINAL_QUESTIONS[finalIndex] || { q: "", a: "" });
     const ta = teams.find((x) => x.id === finalTeams[0]);
     const tb = teams.find((x) => x.id === finalTeams[1]);
     return {
-      screen: "final", timer,
+      screen: "final", timer, finalIntro: intro,
       finalQuestion: fq.q, finalAnswer: fq.a, finalRevealed,
       finalIndex, finalTotal: FINAL_QUESTIONS.length,
       finalTeamA: finalTeamName(0), finalTeamB: finalTeamName(1),
       finalScoreA: ta ? ta.score : 0, finalScoreB: tb ? tb.score : 0,
     };
   }
+  if (screen === "scoreboard") {
+    return { screen: "scoreboard", teams, timer, roundIndex };
+  }
+  // question flow: start / round-intro / question
+  if (mainStage === "start") {
+    return { screen: "start", timer };
+  }
+  if (mainStage === "round-intro") {
+    return { screen: "round-intro", timer, roundIndex: introRound };
+  }
   return {
-    teams, question: activeQ(), answer: activeA(), img: activeImg(),
-    roundIndex, timer, revealed, screen,
+    screen: "question", teams, question: activeQ(), answer: activeA(), img: activeImg(),
+    roundIndex, timer, revealed,
   };
 }
 function broadcast() { chan.post({ type: "state", state: snapshot() }); }
@@ -68,11 +81,26 @@ function renderPresets() {
     .join("");
 }
 function renderCurrent() {
+  const btn = $("btn-reveal");
+  if (screen === "question" && mainStage === "start") {
+    $("q-count").textContent = "Start";
+    $("cur-q").textContent = "— start screen — press Next › to begin";
+    $("cur-a").textContent = "—";
+    btn.disabled = true; btn.style.opacity = "0.4";
+    return;
+  }
+  if (screen === "question" && mainStage === "round-intro") {
+    $("q-count").textContent = `Intro · R${introRound + 1}`;
+    $("cur-q").textContent = `— round intro: ${ROUND_LABELS[introRound] || "Round"} — press Next › for Q1`;
+    $("cur-a").textContent = "—";
+    btn.disabled = true; btn.style.opacity = "0.4";
+    return;
+  }
+  btn.disabled = false; btn.style.opacity = "1";
   $("q-count").textContent = `${qIndex + 1} / ${questions.length}`;
   const img = activeImg();
   $("cur-q").textContent = (img ? "🖼 " : "") + (activeQ() || "—");
   $("cur-a").textContent = activeA() || "—";
-  const btn = $("btn-reveal");
   btn.textContent = revealed ? "Hide answer" : "Reveal answer on screen";
   btn.classList.toggle("on", revealed);
 }
@@ -100,13 +128,16 @@ function renderFinalSelects() {
   });
 }
 function renderFinal() {
-  const fq = FINAL_QUESTIONS[finalIndex] || { q: "", a: "" };
-  $("final-count").textContent = `${finalIndex + 1} / ${FINAL_QUESTIONS.length}`;
-  $("final-cur-q").textContent = fq.q || "—";
-  $("final-cur-a").textContent = fq.a || "—";
+  const intro = finalIndex < 0;
+  const fq = intro ? { q: "", a: "" } : (FINAL_QUESTIONS[finalIndex] || { q: "", a: "" });
+  $("final-count").textContent = intro ? `Intro` : `${finalIndex + 1} / ${FINAL_QUESTIONS.length}`;
+  $("final-cur-q").textContent = intro ? "— intro screen (no question yet) —" : (fq.q || "—");
+  $("final-cur-a").textContent = intro ? "—" : (fq.a || "—");
   const rb = $("final-reveal");
   rb.textContent = finalRevealed ? "Hide answer" : "Reveal answer on screen";
   rb.classList.toggle("on", finalRevealed);
+  rb.disabled = intro;
+  rb.style.opacity = intro ? "0.4" : "1";
   $("final-award-a").textContent = `+1 ◀ ${finalTeamName(0)}`;
   $("final-award-b").textContent = `${finalTeamName(1)} ▶ +1`;
 }
@@ -138,12 +169,83 @@ function renderAll() {
 }
 
 // ── actions ──
-function jump(i) {
+// Stage-aware navigation through: start → round-intro → questions → next round-intro → …
+function setQuestion(i) {
   qIndex = Math.max(0, Math.min(i, questions.length - 1));
   roundIndex = questions[qIndex] ? questions[qIndex].round : roundIndex;
   revealed = false; overrideQ = ""; overrideA = "";
-  $("override-q").value = ""; $("override-a").value = "";
+  const oq = $("override-q"), oa = $("override-a");
+  if (oq) oq.value = ""; if (oa) oa.value = "";
   stopTimer(); timer = 60;
+}
+
+function goNext() {
+  if (screen !== "question") return; // scoreboard/final have their own nav
+  if (mainStage === "start") {
+    // start → intro of first round
+    mainStage = "round-intro";
+    introRound = questions[0] ? questions[0].round : 0;
+    qIndex = 0;
+    renderAll(); return;
+  }
+  if (mainStage === "round-intro") {
+    // intro → first question of that round
+    mainStage = "question";
+    const first = questions.findIndex((q) => q.round === introRound);
+    setQuestion(first >= 0 ? first : 0);
+    renderAll(); return;
+  }
+  // in questions: advance; if next question is a new round, show its intro first
+  if (qIndex >= questions.length - 1) { renderAll(); return; } // last question, stay
+  const nextRound = questions[qIndex + 1].round;
+  if (nextRound !== roundIndex) {
+    mainStage = "round-intro";
+    introRound = nextRound;
+    qIndex = qIndex + 1; // park at first question of new round (shown after intro)
+    revealed = false; stopTimer(); timer = 60;
+    renderAll(); return;
+  }
+  setQuestion(qIndex + 1);
+  renderAll();
+}
+
+function goPrev() {
+  if (screen !== "question") return;
+  if (mainStage === "start") return;
+  if (mainStage === "round-intro") {
+    // intro → back to start, or to last question of previous round
+    if (introRound === (questions[0] ? questions[0].round : 0)) {
+      mainStage = "start";
+    } else {
+      mainStage = "question";
+      // jump to last question before this round's first question
+      const firstOfIntro = questions.findIndex((q) => q.round === introRound);
+      setQuestion(Math.max(0, firstOfIntro - 1));
+    }
+    renderAll(); return;
+  }
+  // in questions
+  if (qIndex <= 0) {
+    mainStage = "round-intro";
+    introRound = questions[0] ? questions[0].round : 0;
+    renderAll(); return;
+  }
+  const prevRound = questions[qIndex - 1].round;
+  if (prevRound !== roundIndex) {
+    // going back across a round boundary → show current round's intro
+    mainStage = "round-intro";
+    introRound = roundIndex;
+    revealed = false; stopTimer(); timer = 60;
+    renderAll(); return;
+  }
+  setQuestion(qIndex - 1);
+  renderAll();
+}
+
+// kept for the editor (jump straight to a question index)
+function jump(i) {
+  mainStage = "question";
+  setQuestion(i);
   renderAll();
 }
 function startTimer() {
@@ -167,14 +269,14 @@ $("seg-screen").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-screen]");
   if (!b) return;
   screen = b.dataset.screen;
-  if (screen === "final") { renderFinalSelects(); stopTimer(); }
+  if (screen === "final") { renderFinalSelects(); stopTimer(); finalIndex = -1; finalRevealed = false; }
   renderScreenSeg(); broadcast();
 });
 
 // ── final-round events ──
 $("final-pick-a").addEventListener("change", (e) => { finalTeams[0] = e.target.value; renderFinal(); broadcast(); });
 $("final-pick-b").addEventListener("change", (e) => { finalTeams[1] = e.target.value; renderFinal(); broadcast(); });
-$("final-prev").addEventListener("click", () => { finalIndex = Math.max(0, finalIndex - 1); finalRevealed = false; renderFinal(); broadcast(); });
+$("final-prev").addEventListener("click", () => { finalIndex = Math.max(-1, finalIndex - 1); finalRevealed = false; renderFinal(); broadcast(); });
 $("final-next").addEventListener("click", () => { finalIndex = Math.min(FINAL_QUESTIONS.length - 1, finalIndex + 1); finalRevealed = false; renderFinal(); broadcast(); });
 $("final-reveal").addEventListener("click", () => { finalRevealed = !finalRevealed; renderFinal(); broadcast(); });
 $("final-award-a").addEventListener("click", () => {
@@ -190,8 +292,8 @@ $("round-chips").addEventListener("click", (e) => {
   if (!b) return;
   roundIndex = +b.dataset.round; renderRoundChips(); broadcast();
 });
-$("q-prev").addEventListener("click", () => jump(qIndex - 1));
-$("q-next").addEventListener("click", () => jump(qIndex + 1));
+$("q-prev").addEventListener("click", goPrev);
+$("q-next").addEventListener("click", goNext);
 $("override-q").addEventListener("input", (e) => { overrideQ = e.target.value; renderCurrent(); broadcast(); });
 $("override-a").addEventListener("input", (e) => { overrideA = e.target.value; renderCurrent(); broadcast(); });
 $("btn-reveal").addEventListener("click", () => { revealed = !revealed; renderCurrent(); broadcast(); });
@@ -305,8 +407,8 @@ document.addEventListener("keydown", (e) => {
   const tag = (e.target.tagName || "").toLowerCase();
   if (tag === "input" || tag === "textarea") return;
   if (e.code === "Space") { e.preventDefault(); running ? stopTimer() : startTimer(); }
-  if (e.code === "ArrowRight") jump(qIndex + 1);
-  if (e.code === "ArrowLeft") jump(qIndex - 1);
+  if (e.code === "ArrowRight") goNext();
+  if (e.code === "ArrowLeft") goPrev();
   if (e.key.toLowerCase() === "a") { revealed = !revealed; renderCurrent(); broadcast(); }
   if (e.key.toLowerCase() === "s") { screen = screen === "scoreboard" ? "question" : "scoreboard"; renderScreenSeg(); broadcast(); }
 });

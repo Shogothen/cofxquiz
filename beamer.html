@@ -89,6 +89,16 @@
     .b-waiting p { color: var(--muted); font-size: 14px; max-width: 42ch; line-height: 1.6; }
     body.connected .b-waiting { display: none; }
 
+    /* start & round intro screens */
+    .b-intro { display: none; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; height: 100%; gap: min(2.5vh, 22px); }
+    .b-intro.show { display: flex; }
+    .b-intro-kicker { font-family: 'JetBrains Mono', monospace; font-weight: 600;
+      font-size: clamp(14px, 1.8vw, 24px); letter-spacing: 0.22em; text-transform: uppercase; }
+    .b-intro-title { font-weight: 800; font-size: clamp(44px, 8vw, 120px); line-height: 1.02;
+      letter-spacing: -0.04em; margin: 0; }
+    .b-intro-sub { color: var(--muted); font-size: clamp(16px, 2vw, 26px); margin: 0; max-width: 28ch; }
+
     /* final / buzzer view */
     .b-finalview { display: none; flex-direction: column; height: 100%;
       justify-content: center; gap: min(5vh, 44px); }
@@ -128,6 +138,19 @@
         <span id="b-roundname">General Knowledge</span>
       </span>
     </header>
+
+    <!-- start screen -->
+    <div class="b-intro" id="b-startview">
+      <span class="b-intro-kicker grad-text">Welcome</span>
+      <h1 class="b-intro-title">Cofinity-X<br>Pub Quiz Night</h1>
+      <p class="b-intro-sub">Grab a drink, find your team. We're about to begin.</p>
+    </div>
+
+    <!-- round intro screen -->
+    <div class="b-intro" id="b-roundintroview">
+      <span class="b-intro-kicker grad-text" id="b-roundintro-num">Round 1</span>
+      <h1 class="b-intro-title" id="b-roundintro-title">Warm-Up</h1>
+    </div>
 
     <!-- question view -->
     <div class="b-qview" id="b-qview">
@@ -174,6 +197,7 @@
         </div>
       </div>
       <div class="b-final-qbox">
+        <p class="b-final-intro-note" id="b-final-intro-note" style="display:none">Final round — get ready to buzz.</p>
         <p class="b-final-question" id="b-final-question">Get ready…</p>
         <div class="b-answer" id="b-final-answer">
           <span class="b-answer-label">Answer</span>

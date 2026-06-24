@@ -8,6 +8,10 @@ const el = {
   roundtag: document.getElementById("b-roundtag"),
   roundpill: document.getElementById("b-roundpill"),
   roundname: document.getElementById("b-roundname"),
+  startview: document.getElementById("b-startview"),
+  roundintroview: document.getElementById("b-roundintroview"),
+  roundintroNum: document.getElementById("b-roundintro-num"),
+  roundintroTitle: document.getElementById("b-roundintro-title"),
   qview: document.getElementById("b-qview"),
   scoreview: document.getElementById("b-scoreview"),
   timer: document.getElementById("b-timer"),
@@ -25,6 +29,7 @@ const el = {
   finalScoreB: document.getElementById("b-final-score-b"),
   finalCounter: document.getElementById("b-final-counter"),
   finalQuestion: document.getElementById("b-final-question"),
+  finalIntroNote: document.getElementById("b-final-intro-note"),
   finalAnswer: document.getElementById("b-final-answer"),
   finalAnswerText: document.getElementById("b-final-answer-text"),
 };
@@ -36,49 +41,62 @@ function render(s) {
   el.timer.textContent = mmss(s.timer);
   el.timer.classList.toggle("low", s.timer <= 10 && s.timer > 0);
 
-  // reset all views first
-  const isFinal = s.screen === "final";
-  const isScore = s.screen === "scoreboard";
+  const sc = s.screen;
+  const isStart = sc === "start";
+  const isRoundIntro = sc === "round-intro";
+  const isFinal = sc === "final";
+  const isScore = sc === "scoreboard";
+  const isQuestion = sc === "question";
 
+  // toggle all views
+  el.startview.classList.toggle("show", isStart);
+  el.roundintroview.classList.toggle("show", isRoundIntro);
   el.finalview.classList.toggle("show", isFinal);
+  el.scoreview.classList.toggle("show", isScore);
+  el.qview.style.display = isQuestion ? "grid" : "none";
+  el.roundtag.style.visibility = isQuestion ? "visible" : "hidden";
+
+  if (isStart) return;
+
+  if (isRoundIntro) {
+    el.roundintroNum.textContent = "Round " + (s.roundIndex + 1);
+    el.roundintroTitle.textContent = ROUND_LABELS[s.roundIndex] || "Round";
+    return;
+  }
+
   if (isFinal) {
-    el.qview.style.display = "none";
-    el.scoreview.classList.remove("show");
-    el.roundtag.style.visibility = "hidden";
+    const intro = !!s.finalIntro;
     el.finalNameA.textContent = s.finalTeamA || "Team A";
     el.finalNameB.textContent = s.finalTeamB || "Team B";
     el.finalScoreA.textContent = s.finalScoreA ?? 0;
     el.finalScoreB.textContent = s.finalScoreB ?? 0;
-    el.finalCounter.textContent = `${(s.finalIndex ?? 0) + 1} / ${s.finalTotal ?? 0}`;
-    el.finalQuestion.textContent = s.finalQuestion || "Get ready…";
-    el.finalAnswer.classList.toggle("show", !!s.finalRevealed);
+    el.finalCounter.textContent = intro ? "Get ready" : `${(s.finalIndex ?? 0) + 1} / ${s.finalTotal ?? 0}`;
+    el.finalIntroNote.style.display = intro ? "block" : "none";
+    el.finalQuestion.style.display = intro ? "none" : "block";
+    el.finalQuestion.textContent = s.finalQuestion || "";
+    el.finalAnswer.classList.toggle("show", !intro && !!s.finalRevealed);
     el.finalAnswerText.textContent = s.finalAnswer || "";
     return;
   }
 
   if (isScore) {
-    el.qview.style.display = "none";
-    el.scoreview.classList.add("show");
-    el.roundtag.style.visibility = "hidden";
     renderScores(s.teams);
-  } else {
-    el.qview.style.display = "grid";
-    el.scoreview.classList.remove("show");
-    el.roundtag.style.visibility = "visible";
-    el.roundpill.textContent = "Round " + (s.roundIndex + 1);
-    el.roundname.textContent = ROUND_LABELS[s.roundIndex] || "Round";
-    el.question.textContent = s.question || "Get ready…";
-    // image (picture round)
-    if (s.img) {
-      if (el.image.getAttribute("src") !== s.img) el.image.src = s.img;
-      el.qview.classList.add("has-image");
-    } else {
-      el.image.removeAttribute("src");
-      el.qview.classList.remove("has-image");
-    }
-    el.answer.classList.toggle("show", !!s.revealed);
-    el.answerText.textContent = s.answer || "";
+    return;
   }
+
+  // question
+  el.roundpill.textContent = "Round " + (s.roundIndex + 1);
+  el.roundname.textContent = ROUND_LABELS[s.roundIndex] || "Round";
+  el.question.textContent = s.question || "Get ready…";
+  if (s.img) {
+    if (el.image.getAttribute("src") !== s.img) el.image.src = s.img;
+    el.qview.classList.add("has-image");
+  } else {
+    el.image.removeAttribute("src");
+    el.qview.classList.remove("has-image");
+  }
+  el.answer.classList.toggle("show", !!s.revealed);
+  el.answerText.textContent = s.answer || "";
 }
 
 function renderScores(teams) {
