@@ -4,6 +4,7 @@ import { ROUND_LABELS, HOST_LINES, AMBIENT_FACTS, mmss, makeChannel, escapeHtml 
 const chan = makeChannel();
 let _scoreVisible = false; // tracks whether scoreboard is currently shown (for bar animation)
 let _lastScreen = null;    // tracks screen changes so one-liners only reroll on entry
+let _winnerMode = null;    // 'tie' | 'solo' — so the winner line matches the actual result
 let _ambientTimer = null;  // rotates ambient facts
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -112,25 +113,30 @@ function render(s) {
   if (isWinner) {
     const sorted = [...(s.teams || [])].sort((a, b) => b.score - a.score);
     const top = sorted[0];
-    const tied = sorted.filter((t) => top && t.score === top.score);
-    if (!top) {
+    // a real tie = at least two teams share the top score AND that score is > 0
+    const tiedTeams = top && top.score > 0 ? sorted.filter((t) => t.score === top.score) : [];
+    const isTie = tiedTeams.length > 1;
+    if (!top || top.score === 0) {
       el.winnerName.textContent = "—";
       el.winnerScore.textContent = "No scores yet";
       el.winnerRunnerup.textContent = "";
-    } else if (tied.length > 1) {
-      el.winnerName.innerHTML = `<span class="b-winner-name-grad">${tied.map((t) => escapeHtml(t.name)).join(" & ")}</span>`;
+      el.bubbleWinner.textContent = "";
+    } else if (isTie) {
+      el.winnerName.innerHTML = `<span class="b-winner-name-grad">${tiedTeams.map((t) => escapeHtml(t.name)).join(" & ")}</span>`;
       el.winnerScore.textContent = `It's a tie at ${top.score} points!`;
       el.winnerRunnerup.textContent = "";
-      if (screenChanged) el.bubbleWinner.textContent = pick(HOST_LINES.winnerTie);
+      // set a tie line only when entering as a tie (avoid stale solo line)
+      if (_winnerMode !== "tie") { el.bubbleWinner.textContent = pick(HOST_LINES.winnerTie); _winnerMode = "tie"; }
     } else {
       el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(top.name)}</span>`;
       el.winnerScore.textContent = `${top.score} points`;
       const second = sorted[1];
       el.winnerRunnerup.textContent = second ? `Runner-up: ${second.name} (${second.score})` : "";
-      if (screenChanged) el.bubbleWinner.textContent = pick(HOST_LINES.winnerSolo);
+      if (_winnerMode !== "solo") { el.bubbleWinner.textContent = pick(HOST_LINES.winnerSolo); _winnerMode = "solo"; }
     }
     return;
   }
+  if (sc !== "winner") _winnerMode = null;
 
   if (isFinal) {
     const intro = !!s.finalIntro;
