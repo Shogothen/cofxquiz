@@ -54,6 +54,9 @@ function snapshot() {
   if (screen === "scoreboard") {
     return { screen: "scoreboard", teams, timer, roundIndex };
   }
+  if (screen === "winner") {
+    return { screen: "winner", teams, timer };
+  }
   // question flow: start / round-intro / question
   if (mainStage === "start") {
     return { screen: "start", timer };
@@ -151,7 +154,7 @@ function renderTeams() {
       return `
       <div class="team-row ${lead ? "lead" : ""}">
         <span class="team-score">${t.score}</span>
-        <span class="team-name">${escapeHtml(t.name)}</span>
+        <input class="team-name-input" data-rename="${t.id}" value="${escapeHtml(t.name)}" />
         <div class="team-actions">
           <button class="btn-plus" data-award="${t.id}">+${POINTS_PER_CORRECT}</button>
           <button class="btn-minus" data-deduct="${t.id}">−</button>
@@ -176,7 +179,9 @@ function setQuestion(i) {
   revealed = false; overrideQ = ""; overrideA = "";
   const oq = $("override-q"), oa = $("override-a");
   if (oq) oq.value = ""; if (oa) oa.value = "";
-  stopTimer(); timer = 60;
+  // only reset the timer if auto-reset is enabled
+  const autoReset = $("timer-autoreset") ? $("timer-autoreset").checked : true;
+  if (autoReset) { stopTimer(); timer = 60; }
 }
 
 function goNext() {
@@ -202,7 +207,7 @@ function goNext() {
     mainStage = "round-intro";
     introRound = nextRound;
     qIndex = qIndex + 1; // park at first question of new round (shown after intro)
-    revealed = false; stopTimer(); timer = 60;
+    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = 60; }
     renderAll(); return;
   }
   setQuestion(qIndex + 1);
@@ -235,7 +240,7 @@ function goPrev() {
     // going back across a round boundary → show current round's intro
     mainStage = "round-intro";
     introRound = roundIndex;
-    revealed = false; stopTimer(); timer = 60;
+    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = 60; }
     renderAll(); return;
   }
   setQuestion(qIndex - 1);
@@ -322,6 +327,18 @@ $("team-list").addEventListener("click", (e) => {
   if (a.dataset.deduct) teams = teams.map((t) => t.id === a.dataset.deduct ? { ...t, score: Math.max(0, t.score - POINTS_PER_CORRECT) } : t);
   if (a.dataset.remove) teams = teams.filter((t) => t.id !== a.dataset.remove);
   renderTeams(); saveTeams(teams); broadcast();
+});
+// inline rename — save on blur or Enter, so typing isn't interrupted by re-renders
+$("team-list").addEventListener("change", (e) => {
+  const inp = e.target.closest("[data-rename]");
+  if (!inp) return;
+  const id = inp.dataset.rename;
+  const name = inp.value.trim() || "Team";
+  teams = teams.map((t) => t.id === id ? { ...t, name } : t);
+  saveTeams(teams); renderTeams(); broadcast();
+});
+$("team-list").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.closest("[data-rename]")) e.target.blur();
 });
 
 // ── preview / beamer ──

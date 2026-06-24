@@ -12,6 +12,10 @@ const el = {
   roundintroview: document.getElementById("b-roundintroview"),
   roundintroNum: document.getElementById("b-roundintro-num"),
   roundintroTitle: document.getElementById("b-roundintro-title"),
+  winnerview: document.getElementById("b-winnerview"),
+  winnerName: document.getElementById("b-winner-name"),
+  winnerScore: document.getElementById("b-winner-score"),
+  winnerRunnerup: document.getElementById("b-winner-runnerup"),
   qview: document.getElementById("b-qview"),
   scoreview: document.getElementById("b-scoreview"),
   timer: document.getElementById("b-timer"),
@@ -44,6 +48,7 @@ function render(s) {
   const sc = s.screen;
   const isStart = sc === "start";
   const isRoundIntro = sc === "round-intro";
+  const isWinner = sc === "winner";
   const isFinal = sc === "final";
   const isScore = sc === "scoreboard";
   const isQuestion = sc === "question";
@@ -51,6 +56,7 @@ function render(s) {
   // toggle all views
   el.startview.classList.toggle("show", isStart);
   el.roundintroview.classList.toggle("show", isRoundIntro);
+  el.winnerview.classList.toggle("show", isWinner);
   el.finalview.classList.toggle("show", isFinal);
   el.scoreview.classList.toggle("show", isScore);
   el.qview.style.display = isQuestion ? "grid" : "none";
@@ -61,6 +67,27 @@ function render(s) {
   if (isRoundIntro) {
     el.roundintroNum.textContent = "Round " + (s.roundIndex + 1);
     el.roundintroTitle.textContent = ROUND_LABELS[s.roundIndex] || "Round";
+    return;
+  }
+
+  if (isWinner) {
+    const sorted = [...(s.teams || [])].sort((a, b) => b.score - a.score);
+    const top = sorted[0];
+    const tied = sorted.filter((t) => top && t.score === top.score);
+    if (!top) {
+      el.winnerName.textContent = "—";
+      el.winnerScore.textContent = "No scores yet";
+      el.winnerRunnerup.textContent = "";
+    } else if (tied.length > 1) {
+      el.winnerName.innerHTML = `<span class="b-winner-name-grad">${tied.map((t) => escapeHtml(t.name)).join(" & ")}</span>`;
+      el.winnerScore.textContent = `It's a tie at ${top.score} points!`;
+      el.winnerRunnerup.textContent = "";
+    } else {
+      el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(top.name)}</span>`;
+      el.winnerScore.textContent = `${top.score} points`;
+      const second = sorted[1];
+      el.winnerRunnerup.textContent = second ? `Runner-up: ${second.name} (${second.score})` : "";
+    }
     return;
   }
 
@@ -110,17 +137,26 @@ function renderScores(teams) {
   el.scorelist.innerHTML = sorted
     .map((t, i) => {
       const pct = lead > 0 ? (t.score / lead) * 100 : 0;
-      const first = i === 0;
+      // "leading" = sharing the top score, not just rank 1 → ties look identical
+      const leading = t.score > 0 && t.score === lead;
+      // standard competition ranking: tied teams share the same rank number
+      let rank = i + 1;
+      if (i > 0 && sorted[i - 1].score === t.score) {
+        // find the rank of the first team with this score
+        rank = sorted.findIndex((x) => x.score === t.score) + 1;
+      }
+      // bar opacity scales with score so equal scores look equal
+      const opacity = lead > 0 ? (0.45 + 0.55 * (t.score / lead)) : 0.3;
       return `
         <div class="b-scorerow">
-          <span class="b-rank ${first ? "first" : ""}">${i + 1}</span>
+          <span class="b-rank ${leading ? "first" : ""}">${rank}</span>
           <div class="b-barcol">
             <div class="b-bartop">
               <span class="b-teamname">${escapeHtml(t.name)}</span>
-              <span class="b-scoreval ${first ? "lead" : ""}">${t.score}</span>
+              <span class="b-scoreval ${leading ? "lead" : ""}">${t.score}</span>
             </div>
             <div class="b-bartrack">
-              <div class="b-barfill" style="width:${pct}%;opacity:${first ? 1 : 0.4}"></div>
+              <div class="b-barfill" style="width:${pct}%;opacity:${opacity}"></div>
             </div>
           </div>
         </div>`;

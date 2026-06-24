@@ -115,6 +115,9 @@ textarea { resize: vertical; margin-bottom: 8px; }
   font-variant-numeric: tabular-nums; line-height: 1; }
 .timer-big.low { color: var(--o3); }
 .presets { display: flex; gap: 6px; }
+.timer-autoreset { display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  font-size: 12.5px; color: var(--muted); cursor: pointer; user-select: none; }
+.timer-autoreset input { accent-color: var(--o2); width: 15px; height: 15px; cursor: pointer; }
 .preset { flex: 1; background: var(--canvas); color: var(--ink-soft);
   border: 1px solid var(--line); border-radius: 10px; padding: 9px 0;
   font-size: 12px; font-family: 'JetBrains Mono', monospace; }
@@ -127,6 +130,11 @@ textarea { resize: vertical; margin-bottom: 8px; }
 .team-score { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
   font-size: 19px; font-weight: 600; color: var(--o3); min-width: 1.6em; text-align: right; }
 .team-name { flex: 1; font-weight: 600; font-size: 15px; }
+.team-name-input { flex: 1; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px;
+  color: var(--ink); background: transparent; border: 1px solid transparent;
+  border-radius: 8px; padding: 6px 8px; min-width: 0; transition: all .12s ease; }
+.team-name-input:hover { border-color: var(--line); background: #fff; }
+.team-name-input:focus { border-color: var(--o2); background: #fff; outline: none; }
 .team-actions { display: flex; gap: 6px; }
 .btn-plus { background: var(--green); color: #fff; border: none; border-radius: 8px;
   padding: 7px 12px; font-weight: 700; font-size: 13px; }

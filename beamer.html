@@ -98,6 +98,12 @@
     .b-intro-title { font-weight: 800; font-size: clamp(44px, 8vw, 120px); line-height: 1.02;
       letter-spacing: -0.04em; margin: 0; }
     .b-intro-sub { color: var(--muted); font-size: clamp(16px, 2vw, 26px); margin: 0; max-width: 28ch; }
+    .b-trophy { font-size: clamp(60px, 10vw, 140px); line-height: 1;
+      animation: answerIn .5s ease; }
+    .b-runnerup { margin-top: min(3vh, 26px); font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(13px, 1.5vw, 19px); color: var(--muted); letter-spacing: 0.04em; }
+    .b-winner-name-grad { background: var(--grad); -webkit-background-clip: text;
+      background-clip: text; color: transparent; }
 
     /* final / buzzer view */
     .b-finalview { display: none; flex-direction: column; height: 100%;
@@ -150,6 +156,15 @@
     <div class="b-intro" id="b-roundintroview">
       <span class="b-intro-kicker grad-text" id="b-roundintro-num">Round 1</span>
       <h1 class="b-intro-title" id="b-roundintro-title">Warm-Up</h1>
+    </div>
+
+    <!-- winner screen -->
+    <div class="b-intro" id="b-winnerview">
+      <span class="b-intro-kicker grad-text">Champions</span>
+      <div class="b-trophy">🏆</div>
+      <h1 class="b-intro-title" id="b-winner-name">—</h1>
+      <p class="b-intro-sub" id="b-winner-score">—</p>
+      <div class="b-runnerup" id="b-winner-runnerup"></div>
     </div>
 
     <!-- question view -->
