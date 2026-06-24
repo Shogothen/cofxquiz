@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cofinity-X Pub Quiz — Control</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div class="ctrl-bar">
+    <span class="ctrl-brand">Cofinity-X <span class="ctrl-tag">Quiz Control</span></span>
+    <div class="bar-actions">
+      <button class="pill-white" id="btn-editor">Edit questions</button>
+      <button class="pill-white" id="btn-preview">Hide preview</button>
+      <button class="pill-dark" id="btn-beamer">Open beamer window ↗</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="col">
+      <!-- Display -->
+      <div class="section">
+        <div class="section-title">Display</div>
+        <div class="seg" id="seg-screen">
+          <button data-screen="question" class="on">Question</button>
+          <button data-screen="scoreboard">Scoreboard</button>
+        </div>
+        <div class="round-block">
+          <span class="mini">Round</span>
+          <div class="chips" id="round-chips"></div>
+          <span class="round-name grad-text" id="round-name">General Knowledge</span>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div class="section">
+        <div class="section-title">Question</div>
+        <div class="qnav">
+          <button class="pill-white" id="q-prev">‹ Prev</button>
+          <span class="qcount" id="q-count">1 / 9</span>
+          <button class="pill-white" id="q-next">Next ›</button>
+        </div>
+        <textarea id="override-q" rows="2"
+          placeholder="Override question (optional — leave empty to use the saved set)"></textarea>
+        <input type="text" id="override-a" placeholder="Override answer" />
+        <div class="cur-box">
+          <span class="mini">On screen now</span>
+          <p class="cur-q" id="cur-q">—</p>
+          <p class="cur-a">Answer · <b id="cur-a">—</b></p>
+        </div>
+        <button class="reveal-btn" id="btn-reveal">Reveal answer on screen</button>
+      </div>
+
+      <!-- Timer -->
+      <div class="section">
+        <div class="section-title">Timer</div>
+        <div class="timer-row">
+          <div class="timer-big" id="timer-display">01:00</div>
+          <div style="display:flex;gap:8px">
+            <button class="pill-dark" id="timer-toggle">Start</button>
+            <button class="pill-white" id="timer-reset">Reset</button>
+          </div>
+        </div>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <!-- Teams -->
+      <div class="section">
+        <div class="section-title">Teams &amp; scoring</div>
+        <div class="add-row">
+          <input type="text" id="new-team" placeholder="New team name" />
+          <button class="pill-dark" id="add-team">Add</button>
+        </div>
+        <div class="team-list" id="team-list"></div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-pane" id="preview-pane">
+      <div class="preview-label">Beamer preview · live</div>
+      <div class="preview-frame">
+        <iframe id="preview-frame" src="beamer.html" title="Beamer preview"></iframe>
+      </div>
+      <p class="preview-hint">
+        Open the beamer window, drag it to the projector and press F11 for fullscreen.
+        Control and beamer run on the same computer and sync in real time. Everything
+        you set here mirrors below and on the projector.
+      </p>
+    </div>
+  </div>
+
+  <!-- Editor modal -->
+  <div class="modal-backdrop" id="editor-modal">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title">Edit questions</span>
+        <button class="btn-x" id="editor-close">✕</button>
+      </div>
+      <div class="modal-body" id="editor-body"></div>
+      <div class="modal-foot">
+        <button class="pill-white" id="editor-reset">Reset to defaults</button>
+        <div style="display:flex;gap:10px">
+          <button class="pill-white" id="editor-cancel">Cancel</button>
+          <button class="pill-dark" id="editor-save">Save questions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="assets/control.js"></script>
+</body>
+</html>

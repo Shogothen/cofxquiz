@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cofinity-X Pub Quiz — Beamer</title>
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    html, body { height: 100%; }
+    .beamer { min-height: 100vh; display: flex; flex-direction: column;
+      padding: min(5.5vh, 52px) min(6vw, 72px); }
+    .b-top { display: flex; align-items: center; gap: min(2.5vw, 28px); flex-wrap: wrap; }
+    .b-wordmark { font-weight: 700; font-size: clamp(18px, 2.2vw, 28px); letter-spacing: -0.02em; }
+    .b-kicker { font-family: 'JetBrains Mono', monospace; font-size: clamp(11px,1.3vw,16px);
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.18em; }
+    .b-roundtag { margin-left: auto; display: flex; align-items: center; gap: 14px;
+      font-weight: 500; font-size: clamp(13px,1.5vw,20px); color: var(--ink-soft); }
+    .b-roundpill { background: var(--grad); color: #fff; font-weight: 600;
+      padding: 5px 14px; border-radius: 999px; font-size: 0.9em; }
+
+    .b-qwrap { flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; gap: min(5vh, 44px); }
+    .b-timer { font-family: 'JetBrains Mono', monospace; font-weight: 600;
+      font-size: clamp(56px, 11vw, 150px); line-height: 1; font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em; }
+    .b-timer.low { color: var(--o3); }
+    .b-question { font-weight: 700; font-size: clamp(30px, 5vw, 76px); line-height: 1.08;
+      max-width: 18ch; margin: 0; letter-spacing: -0.03em; }
+    .b-answer { display: none; flex-direction: column; align-items: center; gap: 10px;
+      padding: 18px 40px; border-radius: 18px; background: #fff; border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.08); }
+    .b-answer.show { display: flex; }
+    .b-answer-label { font-family: 'JetBrains Mono', monospace; font-size: clamp(11px,1.1vw,14px);
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+    .b-answer-text { font-weight: 800; font-size: clamp(28px,4.2vw,58px); letter-spacing: -0.02em; }
+
+    .b-scorewrap { flex: 1; display: flex; flex-direction: column; justify-content: center;
+      max-width: 1080px; width: 100%; margin: 0 auto; }
+    .b-scoretitle { font-weight: 800; font-size: clamp(36px,6vw,84px);
+      margin: 0 0 min(5vh,38px); letter-spacing: -0.04em; }
+    .b-scorelist { display: flex; flex-direction: column; gap: min(2.4vh, 22px); }
+    .b-scorerow { display: flex; align-items: center; gap: min(2.5vw, 30px); }
+    .b-rank { font-family: 'JetBrains Mono', monospace; font-size: clamp(18px,2.4vw,34px);
+      font-weight: 500; color: var(--muted); min-width: 1.3em; text-align: center; flex-shrink: 0; }
+    .b-rank.first { color: var(--o3); font-weight: 600; }
+    .b-barcol { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+    .b-bartop { display: flex; justify-content: space-between; align-items: baseline; }
+    .b-teamname { font-weight: 600; font-size: clamp(20px,2.8vw,38px); letter-spacing: -0.02em; }
+    .b-scoreval { font-family: 'JetBrains Mono', monospace; font-weight: 600;
+      font-size: clamp(20px,2.8vw,38px); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+    .b-scoreval.lead { color: var(--o3); }
+    .b-bartrack { height: 7px; background: #D6D6D6; border-radius: 4px; overflow: hidden; }
+    .b-barfill { height: 100%; background: var(--grad); border-radius: 4px; transition: width .5s ease; }
+    .b-empty { font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+
+    .b-foot { font-family: 'JetBrains Mono', monospace; font-size: clamp(10px,1vw,13px);
+      color: var(--muted); text-align: center; letter-spacing: 0.1em; }
+
+    /* hidden until control connects */
+    .b-waiting { position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 14px; text-align: center; padding: 24px; }
+    .b-waiting h2 { font-weight: 700; font-size: 22px; letter-spacing: -0.02em; }
+    .b-waiting p { color: var(--muted); font-size: 14px; max-width: 40ch; line-height: 1.6; }
+    body.connected .b-waiting { display: none; }
+  </style>
+</head>
+<body>
+  <div class="beamer" id="beamer">
+    <header class="b-top">
+      <span class="b-wordmark">Cofinity-X</span>
+      <span class="b-kicker">Pub Quiz Night</span>
+      <span class="b-roundtag" id="b-roundtag" style="display:none">
+        <span class="b-roundpill" id="b-roundpill">Round 1</span>
+        <span id="b-roundname">General Knowledge</span>
+      </span>
+    </header>
+
+    <!-- question view -->
+    <div class="b-qwrap" id="b-qview">
+      <div class="b-timer" id="b-timer">01:00</div>
+      <p class="b-question" id="b-question">Get ready…</p>
+      <div class="b-answer" id="b-answer">
+        <span class="b-answer-label">Answer</span>
+        <span class="b-answer-text grad-text" id="b-answer-text"></span>
+      </div>
+    </div>
+
+    <!-- scoreboard view -->
+    <div class="b-scorewrap" id="b-scoreview" style="display:none">
+      <h1 class="b-scoretitle">Scoreboard</h1>
+      <div class="b-scorelist" id="b-scorelist"></div>
+    </div>
+
+    <footer class="b-foot">Drinks on Cofinity-X · prizes from the pool</footer>
+  </div>
+
+  <div class="b-waiting">
+    <h2>Beamer ready</h2>
+    <p>Waiting for the control window on this computer. Keep the control tab open and start running the quiz — this screen updates live.</p>
+  </div>
+
+  <script type="module" src="assets/beamer.js"></script>
+</body>
+</html>
