@@ -11,7 +11,8 @@ let questions = loadQuestions();
 let teams = loadTeams();
 let qIndex = 0;
 let roundIndex = questions[0] ? questions[0].round : 0;
-let timer = 60;
+const DEFAULT_TIMER = 45; // seconds per question
+let timer = DEFAULT_TIMER;
 let timerId = null;
 let running = false;
 let revealed = false;
@@ -179,9 +180,11 @@ function setQuestion(i) {
   revealed = false; overrideQ = ""; overrideA = "";
   const oq = $("override-q"), oa = $("override-a");
   if (oq) oq.value = ""; if (oa) oa.value = "";
-  // only reset the timer if auto-reset is enabled
+  // reset the timer to default if auto-reset is enabled
   const autoReset = $("timer-autoreset") ? $("timer-autoreset").checked : true;
-  if (autoReset) { stopTimer(); timer = 60; }
+  if (autoReset) { stopTimer(); timer = DEFAULT_TIMER; }
+  // auto-start the timer whenever we land on a question
+  startTimer();
 }
 
 function goNext() {
@@ -207,7 +210,7 @@ function goNext() {
     mainStage = "round-intro";
     introRound = nextRound;
     qIndex = qIndex + 1; // park at first question of new round (shown after intro)
-    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = 60; }
+    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = DEFAULT_TIMER; }
     renderAll(); return;
   }
   setQuestion(qIndex + 1);
@@ -240,7 +243,7 @@ function goPrev() {
     // going back across a round boundary → show current round's intro
     mainStage = "round-intro";
     introRound = roundIndex;
-    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = 60; }
+    revealed = false; if ($("timer-autoreset") && $("timer-autoreset").checked) { stopTimer(); timer = DEFAULT_TIMER; }
     renderAll(); return;
   }
   setQuestion(qIndex - 1);
@@ -255,6 +258,7 @@ function jump(i) {
 }
 function startTimer() {
   if (running) return;
+  if (timer <= 0) return; // nothing to count down
   running = true;
   timerId = setInterval(() => {
     timer -= 1;
@@ -304,7 +308,7 @@ $("override-a").addEventListener("input", (e) => { overrideA = e.target.value; r
 $("btn-reveal").addEventListener("click", () => { revealed = !revealed; renderCurrent(); broadcast(); });
 
 $("timer-toggle").addEventListener("click", () => running ? stopTimer() : startTimer());
-$("timer-reset").addEventListener("click", () => { stopTimer(); timer = 60; renderTimer(); broadcast(); });
+$("timer-reset").addEventListener("click", () => { stopTimer(); timer = DEFAULT_TIMER; renderTimer(); broadcast(); });
 $("presets").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-sec]");
   if (!b) return;
