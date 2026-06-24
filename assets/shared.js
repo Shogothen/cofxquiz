@@ -42,23 +42,23 @@ export const DEFAULT_QUESTIONS = [
   { round: 2, q: "What was the first feature-length animated film by Disney (1937)?", a: "Snow White" },
   { round: 2, q: "Which actor played the Joker in 2019's 'Joker'?", a: "Phoenix" },
 
-  // ── Round 4 · Picture Round (flags + landmarks; images on beamer) ──
+  // ── Round 4 · Picture Round (flags + country outlines; images on beamer) ──
   { round: 3, q: "Which country's flag is this?", a: "Nepal",
     img: "https://flagcdn.com/w1280/np.png" },
+  { round: 3, q: "Which country is this outline?", a: "Italy",
+    img: "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/it/512.png" },
   { round: 3, q: "Which country's flag is this?", a: "Bhutan",
     img: "https://flagcdn.com/w1280/bt.png" },
-  { round: 3, q: "Name this landmark.", a: "Petronas Towers",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Petronas_Panorama_II.jpg/800px-Petronas_Panorama_II.jpg" },
-  { round: 3, q: "Which country's flag is this?", a: "Sri Lanka",
-    img: "https://flagcdn.com/w1280/lk.png" },
-  { round: 3, q: "Name this landmark.", a: "Christ the Redeemer",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Christ_on_Corcovado_mountain.JPG/800px-Christ_on_Corcovado_mountain.JPG" },
+  { round: 3, q: "Which country is this outline?", a: "Japan",
+    img: "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/jp/512.png" },
   { round: 3, q: "Which country's flag is this?", a: "Kazakhstan",
     img: "https://flagcdn.com/w1280/kz.png" },
-  { round: 3, q: "Name this landmark.", a: "Sagrada Família",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Sagrada_Familia_01.jpg/800px-Sagrada_Familia_01.jpg" },
+  { round: 3, q: "Which country is this outline?", a: "Chile",
+    img: "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/cl/512.png" },
   { round: 3, q: "Which country's flag is this?", a: "Mozambique",
     img: "https://flagcdn.com/w1280/mz.png" },
+  { round: 3, q: "Which country is this outline?", a: "India",
+    img: "https://raw.githubusercontent.com/djaiss/mapsicon/master/all/in/512.png" },
 
   // ── Round 5 · Around the World (hard) ──
   { round: 4, q: "What is the only country that is also a continent?", a: "Australia" },
