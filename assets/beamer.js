@@ -26,13 +26,13 @@ function render(s) {
 
   if (s.screen === "scoreboard") {
     el.qview.style.display = "none";
-    el.scoreview.style.display = "flex";
-    el.roundtag.style.display = "none";
+    el.scoreview.classList.add("show");
+    el.roundtag.style.visibility = "hidden";
     renderScores(s.teams);
   } else {
-    el.qview.style.display = "flex";
-    el.scoreview.style.display = "none";
-    el.roundtag.style.display = "flex";
+    el.qview.style.display = "grid";
+    el.scoreview.classList.remove("show");
+    el.roundtag.style.visibility = "visible";
     el.roundpill.textContent = "Round " + (s.roundIndex + 1);
     el.roundname.textContent = ROUND_LABELS[s.roundIndex] || "Round";
     el.question.textContent = s.question || "Get ready…";
