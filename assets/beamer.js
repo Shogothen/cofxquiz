@@ -9,6 +9,57 @@ let _ambientTimer = null;  // rotates ambient facts
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// ── confetti engine (canvas, no dependencies) ─────────────────────────────
+const confetti = (() => {
+  const cv = document.getElementById("b-confetti");
+  const ctx = cv ? cv.getContext("2d") : null;
+  let parts = [], raf = null, stopAt = 0;
+  const COLORS = ["#F7A823", "#FF6B4A", "#F0464B", "#FFD15C", "#fff", "#1a1a1a"];
+  function resize() { if (!cv) return; cv.width = window.innerWidth; cv.height = window.innerHeight; }
+  window.addEventListener("resize", resize);
+  function spawn(n) {
+    for (let i = 0; i < n; i++) {
+      parts.push({
+        x: Math.random() * cv.width,
+        y: -20 - Math.random() * cv.height * 0.3,
+        r: 5 + Math.random() * 7,
+        c: pick(COLORS),
+        vx: -2 + Math.random() * 4,
+        vy: 2 + Math.random() * 4,
+        rot: Math.random() * Math.PI,
+        vr: -0.2 + Math.random() * 0.4,
+        shape: Math.random() > 0.5 ? "rect" : "circ",
+      });
+    }
+  }
+  function frame() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    parts.forEach((p) => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
+      if (p.shape === "rect") ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.6);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.r / 2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    });
+    parts = parts.filter((p) => p.y < cv.height + 30);
+    // keep topping up until stopAt, then let the rest fall out
+    if (Date.now() < stopAt && parts.length < 240) spawn(6);
+    if (parts.length > 0 || Date.now() < stopAt) raf = requestAnimationFrame(frame);
+    else { cv.classList.remove("show"); raf = null; }
+  }
+  return {
+    burst() {
+      if (!cv) return;
+      resize(); cv.classList.add("show");
+      stopAt = Date.now() + 3500; // emit for 3.5s, then fall out
+      spawn(120);
+      if (!raf) raf = requestAnimationFrame(frame);
+    },
+    stop() { if (cv) { stopAt = 0; parts = []; ctx && ctx.clearRect(0, 0, cv.width, cv.height); cv.classList.remove("show"); } },
+  };
+})();
+
 const el = {
   body: document.body,
   roundtag: document.getElementById("b-roundtag"),
@@ -110,6 +161,13 @@ function render(s) {
     return;
   }
 
+  // confetti on winner entry (only when there's an actual winner)
+  if (isWinner && screenChanged) {
+    const hasWinner = (s.teams || []).some((t) => t.score > 0);
+    if (hasWinner) confetti.burst();
+  }
+  if (!isWinner) confetti.stop();
+
   if (isWinner) {
     const sorted = [...(s.teams || [])].sort((a, b) => b.score - a.score);
     const top = sorted[0];
@@ -187,21 +245,27 @@ function renderScores(teams, animate) {
       '<p class="b-empty">Add teams in the control panel to begin.</p>';
     return;
   }
+
+  // FLIP: record current positions of existing rows (by team id) before re-render
+  const firstPos = {};
+  if (!animate) {
+    el.scorelist.querySelectorAll(".b-scorerow[data-id]").forEach((row) => {
+      firstPos[row.dataset.id] = row.getBoundingClientRect().top;
+    });
+  }
+
   el.scorelist.innerHTML = sorted
     .map((t, i) => {
       const pct = lead > 0 ? (t.score / lead) * 100 : 0;
-      // "leading" = sharing the top score, not just rank 1 → ties look identical
       const leading = t.score > 0 && t.score === lead;
-      // standard competition ranking: tied teams share the same rank number
       let rank = i + 1;
       if (i > 0 && sorted[i - 1].score === t.score) {
         rank = sorted.findIndex((x) => x.score === t.score) + 1;
       }
       const opacity = lead > 0 ? (0.45 + 0.55 * (t.score / lead)) : 0.3;
-      // when animating, start at width 0 then grow to target on next frame
       const startW = animate ? 0 : pct;
       return `
-        <div class="b-scorerow" style="${animate ? `animation: scoreRowIn .4s ease ${i * 0.08}s both;` : ""}">
+        <div class="b-scorerow" data-id="${t.id}" style="${animate ? `animation: scoreRowIn .4s ease ${i * 0.08}s both;` : ""}">
           <span class="b-rank ${leading ? "first" : ""}">${rank}</span>
           <div class="b-barcol">
             <div class="b-bartop">
@@ -215,13 +279,29 @@ function renderScores(teams, animate) {
         </div>`;
     })
     .join("");
+
   if (animate) {
-    // grow bars to target width after a frame so the transition kicks in
+    // first open: grow bars from 0 to target
     requestAnimationFrame(() => requestAnimationFrame(() => {
       el.scorelist.querySelectorAll(".b-barfill").forEach((bar) => {
         bar.style.width = bar.dataset.target + "%";
       });
     }));
+  } else {
+    // FLIP: animate rows sliding from their old position to the new one
+    el.scorelist.querySelectorAll(".b-scorerow[data-id]").forEach((row) => {
+      const last = row.getBoundingClientRect().top;
+      const first = firstPos[row.dataset.id];
+      if (first !== undefined && Math.abs(first - last) > 1) {
+        const dy = first - last;
+        row.style.transform = `translateY(${dy}px)`;
+        row.style.transition = "none";
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          row.style.transition = "transform .55s cubic-bezier(.2,.8,.25,1)";
+          row.style.transform = "";
+        }));
+      }
+    });
   }
 }
 
