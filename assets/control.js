@@ -100,6 +100,52 @@ function renderPresets() {
     .map((s) => `<button class="preset" data-sec="${s}">${s}s</button>`)
     .join("");
 }
+
+// "Up next" preview — mirrors what the next Next-click will show
+function renderNext() {
+  const box = $("next-box");
+  const out = $("next-q");
+  if (!box || !out) return;
+  box.classList.remove("is-song", "is-image", "is-end");
+
+  // helper to describe a question slot
+  const describe = (q) => {
+    if (!q) return null;
+    if (q.audio) { box.classList.add("is-song"); return "Guess the song"; }
+    if (q.img) { box.classList.add("is-image"); return q.q || "(picture)"; }
+    return q.q || "—";
+  };
+
+  if (screen === "question" && mainStage === "start") {
+    const r = questions[0] ? questions[0].round : 0;
+    out.textContent = `Round ${r + 1} intro · ${ROUND_LABELS[r] || "Round"}`;
+    return;
+  }
+  if (screen === "question" && mainStage === "round-intro") {
+    const first = questions.find((q) => q.round === introRound);
+    out.textContent = describe(first) || "First question";
+    return;
+  }
+  if (screen === "question") {
+    // we're on a question; what does the next Next do?
+    if (qIndex >= questions.length - 1) {
+      box.classList.add("is-end");
+      out.textContent = "Last question — then the Final";
+      return;
+    }
+    const nextQ = questions[qIndex + 1];
+    if (nextQ.round !== roundIndex) {
+      // a round-intro comes next
+      out.textContent = `Round ${nextQ.round + 1} intro · ${ROUND_LABELS[nextQ.round] || "Round"}`;
+    } else {
+      out.textContent = describe(nextQ) || "—";
+    }
+    return;
+  }
+  // non-question screens (scoreboard/final/winner/ambient): hide preview content
+  box.classList.add("is-end");
+  out.textContent = "—";
+}
 function renderCurrent() {
   const btn = $("btn-reveal");
   const playBtn = $("song-play");
@@ -109,6 +155,7 @@ function renderCurrent() {
     $("cur-a").textContent = "—";
     btn.disabled = true; btn.style.opacity = "0.4";
     if (playBtn) playBtn.style.display = "none";
+    renderNext();
     return;
   }
   if (screen === "question" && mainStage === "round-intro") {
@@ -117,6 +164,7 @@ function renderCurrent() {
     $("cur-a").textContent = "—";
     btn.disabled = true; btn.style.opacity = "0.4";
     if (playBtn) playBtn.style.display = "none";
+    renderNext();
     return;
   }
   btn.disabled = false; btn.style.opacity = "1";
@@ -133,6 +181,7 @@ function renderCurrent() {
     playBtn.style.display = isSong ? "block" : "none";
     playBtn.textContent = songPlaying ? "■ Stop song" : "▶ Play song";
   }
+  renderNext();
 }
 function renderTimer() {
   const d = $("timer-display");
