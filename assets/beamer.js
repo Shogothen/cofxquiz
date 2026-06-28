@@ -187,15 +187,34 @@ function render(s) {
 
   // confetti on winner entry (only when there's an actual winner)
   if (isWinner && screenChanged) {
-    const hasWinner = (s.teams || []).some((t) => t.score > 0);
+    const hasWinner = s.finalPlayed || (s.teams || []).some((t) => t.score > 0);
     if (hasWinner) confetti.burst();
   }
   if (!isWinner) confetti.stop();
 
   if (isWinner) {
+    if (s.finalPlayed) {
+      // winner decided by the final showdown (independent 0:0 scoring)
+      const a = { name: s.finalTeamA || "Team A", score: s.finalScoreA || 0 };
+      const bb = { name: s.finalTeamB || "Team B", score: s.finalScoreB || 0 };
+      const hi = a.score >= bb.score ? a : bb;
+      const lo = a.score >= bb.score ? bb : a;
+      if (a.score === bb.score) {
+        el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(a.name)} & ${escapeHtml(bb.name)}</span>`;
+        el.winnerScore.textContent = `It's a tie at ${a.score} in the final!`;
+        el.winnerRunnerup.textContent = "";
+        if (_winnerMode !== "tie") { el.bubbleWinner.textContent = pick(HOST_LINES.winnerTie); _winnerMode = "tie"; }
+      } else {
+        el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(hi.name)}</span>`;
+        el.winnerScore.textContent = `Final won ${hi.score}–${lo.score}`;
+        el.winnerRunnerup.textContent = `Runner-up: ${lo.name}`;
+        if (_winnerMode !== "solo") { el.bubbleWinner.textContent = pick(HOST_LINES.winnerSolo); _winnerMode = "solo"; }
+      }
+      return;
+    }
+    // fallback: no final played → overall points decide
     const sorted = [...(s.teams || [])].sort((a, b) => b.score - a.score);
     const top = sorted[0];
-    // a real tie = at least two teams share the top score AND that score is > 0
     const tiedTeams = top && top.score > 0 ? sorted.filter((t) => t.score === top.score) : [];
     const isTie = tiedTeams.length > 1;
     if (!top || top.score === 0) {
@@ -207,7 +226,6 @@ function render(s) {
       el.winnerName.innerHTML = `<span class="b-winner-name-grad">${tiedTeams.map((t) => escapeHtml(t.name)).join(" & ")}</span>`;
       el.winnerScore.textContent = `It's a tie at ${top.score} points!`;
       el.winnerRunnerup.textContent = "";
-      // set a tie line only when entering as a tie (avoid stale solo line)
       if (_winnerMode !== "tie") { el.bubbleWinner.textContent = pick(HOST_LINES.winnerTie); _winnerMode = "tie"; }
     } else {
       el.winnerName.innerHTML = `<span class="b-winner-name-grad">${escapeHtml(top.name)}</span>`;

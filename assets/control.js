@@ -26,6 +26,7 @@ let overrideA = "";
 let finalIndex = -1; // -1 = intro screen (no question yet)
 let finalRevealed = false;
 let finalTeams = [null, null]; // ids of the two finalists
+let finalScores = [0, 0];      // independent final scores (the final is its own showdown, 0:0 start)
 
 // ── guess-the-song state (songs are normal questions with an `audio` field) ──
 let songPlaying = false;
@@ -45,21 +46,26 @@ function snapshot() {
   if (screen === "final") {
     const intro = finalIndex < 0;
     const fq = intro ? { q: "", a: "" } : (FINAL_QUESTIONS[finalIndex] || { q: "", a: "" });
-    const ta = teams.find((x) => x.id === finalTeams[0]);
-    const tb = teams.find((x) => x.id === finalTeams[1]);
     return {
       screen: "final", timer, finalIntro: intro,
       finalQuestion: fq.q, finalAnswer: fq.a, finalRevealed,
       finalIndex, finalTotal: FINAL_QUESTIONS.length,
       finalTeamA: finalTeamName(0), finalTeamB: finalTeamName(1),
-      finalScoreA: ta ? ta.score : 0, finalScoreB: tb ? tb.score : 0,
+      finalScoreA: finalScores[0], finalScoreB: finalScores[1],
     };
   }
   if (screen === "scoreboard") {
     return { screen: "scoreboard", teams, timer, roundIndex };
   }
   if (screen === "winner") {
-    return { screen: "winner", teams, timer };
+    // if a final was played (someone scored), the winner is decided by the final showdown
+    const finalPlayed = finalScores[0] > 0 || finalScores[1] > 0;
+    return {
+      screen: "winner", teams, timer,
+      finalPlayed,
+      finalTeamA: finalTeamName(0), finalTeamB: finalTeamName(1),
+      finalScoreA: finalScores[0], finalScoreB: finalScores[1],
+    };
   }
   if (screen === "ambient") {
     return { screen: "ambient", timer };
@@ -304,7 +310,14 @@ $("seg-screen").addEventListener("click", (e) => {
   screen = b.dataset.screen;
   // leaving the quiz view → stop any playing song audio
   if (screen !== "question") stopSongAudio();
-  if (screen === "final") { renderFinalSelects(); stopTimer(); finalIndex = -1; finalRevealed = false; }
+  if (screen === "final") {
+    // auto-pick the two highest-scoring teams as finalists, final starts 0:0
+    const ranked = [...teams].sort((a, b2) => b2.score - a.score);
+    finalTeams = [ranked[0] ? ranked[0].id : null, ranked[1] ? ranked[1].id : null];
+    finalScores = [0, 0];
+    finalIndex = -1; finalRevealed = false;
+    renderFinalSelects(); stopTimer();
+  }
   renderScreenSeg(); broadcast();
 });
 
@@ -315,12 +328,10 @@ $("final-prev").addEventListener("click", () => { finalIndex = Math.max(-1, fina
 $("final-next").addEventListener("click", () => { finalIndex = Math.min(FINAL_QUESTIONS.length - 1, finalIndex + 1); finalRevealed = false; renderFinal(); broadcast(); });
 $("final-reveal").addEventListener("click", () => { finalRevealed = !finalRevealed; renderFinal(); broadcast(); });
 $("final-award-a").addEventListener("click", () => {
-  const t = teams.find((x) => x.id === finalTeams[0]);
-  if (t) { t.score += POINTS_PER_CORRECT; saveTeams(teams); renderFinal(); broadcast(); }
+  finalScores[0] += POINTS_PER_CORRECT; renderFinal(); broadcast();
 });
 $("final-award-b").addEventListener("click", () => {
-  const t = teams.find((x) => x.id === finalTeams[1]);
-  if (t) { t.score += POINTS_PER_CORRECT; saveTeams(teams); renderFinal(); broadcast(); }
+  finalScores[1] += POINTS_PER_CORRECT; renderFinal(); broadcast();
 });
 
 // ── guess-the-song: audio plays in THIS control window, tied to the current question ──
