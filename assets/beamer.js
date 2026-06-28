@@ -16,36 +16,93 @@ let _sndWinnerFired = false;
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ── sound engine (Web Audio, synthesised — no files) ──────────────────────
+// ── sound engine (Web Audio, synthesised — no files, copyright-clean) ─────
 const sound = (() => {
-  let ctx = null, enabled = false;
+  let ctx = null, enabled = false, master = null;
   function ensure() {
-    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (!ctx) {
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        master = ctx.createGain();
+        master.gain.value = 0.5;
+        master.connect(ctx.destination);
+      } catch (e) {}
+    }
     if (ctx && ctx.state === "suspended") ctx.resume();
   }
-  function tone(freq, dur, type, vol, delay) {
+  // a single voice with its own envelope; optional pitch glide from→to
+  function blip(opts) {
     if (!enabled || !ctx) return;
-    const t0 = ctx.currentTime + (delay || 0);
+    const {
+      freq, to, type = "square", dur = 0.12, vol = 0.25,
+      delay = 0, attack = 0.005, decay,
+    } = opts;
+    const t0 = ctx.currentTime + delay;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
-    osc.type = type || "sine";
+    osc.type = type;
     osc.frequency.setValueAtTime(freq, t0);
+    if (to) osc.frequency.exponentialRampToValueAtTime(to, t0 + dur);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + (decay || dur));
+    osc.connect(g); g.connect(master);
+    osc.start(t0); osc.stop(t0 + (decay || dur) + 0.03);
+  }
+  // soft noise burst for percussive "hit" sounds
+  function noise(dur, vol, delay) {
+    if (!enabled || !ctx) return;
+    const t0 = ctx.currentTime + (delay || 0);
+    const n = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol || 0.15, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g); g.connect(ctx.destination);
-    osc.start(t0); osc.stop(t0 + dur + 0.02);
+    src.connect(g); g.connect(master);
+    src.start(t0);
   }
   return {
     enable() { ensure(); enabled = true; },
     disable() { enabled = false; },
     isOn() { return enabled; },
-    // distinct cues
-    question() { tone(523, 0.12, "sine", 0.14); },                         // soft blip on new question
-    reveal()   { tone(660, 0.14, "triangle", 0.18); tone(990, 0.22, "sine", 0.16, 0.08); }, // ding-up
-    point()    { tone(880, 0.08, "square", 0.12); },                       // crisp tick for a point
-    buzz()     { tone(160, 0.25, "sawtooth", 0.2); },                      // final buzzer
-    fanfare()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.3, "triangle", 0.2, i * 0.12)); },
+
+    // new question: bright two-step "ready" chirp
+    question() {
+      blip({ freq: 587, type: "square", dur: 0.07, vol: 0.18 });
+      blip({ freq: 880, type: "square", dur: 0.10, vol: 0.18, delay: 0.07 });
+    },
+    // reveal: classic arcade "power-up" rising arpeggio (Mario-coin energy, original tones)
+    reveal() {
+      const notes = [523, 659, 784, 1047, 1319];
+      notes.forEach((f, i) => blip({ freq: f, type: "square", dur: 0.09, vol: 0.2, delay: i * 0.06 }));
+      // sparkle tail
+      blip({ freq: 1568, to: 2093, type: "triangle", dur: 0.18, vol: 0.14, delay: notes.length * 0.06 });
+    },
+    // point: snappy "coin" — two quick rising tones + tiny click
+    point() {
+      noise(0.03, 0.12);
+      blip({ freq: 988, type: "square", dur: 0.06, vol: 0.22 });
+      blip({ freq: 1319, type: "square", dur: 0.12, vol: 0.22, delay: 0.06 });
+    },
+    // final buzzer: gritty descending tone
+    buzz() {
+      blip({ freq: 220, to: 110, type: "sawtooth", dur: 0.35, vol: 0.28 });
+      noise(0.2, 0.1);
+    },
+    // winner fanfare: triumphant multi-note flourish with a chord finish
+    fanfare() {
+      const melody = [
+        [523, 0.0], [523, 0.12], [523, 0.24], [659, 0.40],
+        [784, 0.58], [659, 0.74], [784, 0.86],
+      ];
+      melody.forEach(([f, d]) => blip({ freq: f, type: "square", dur: 0.16, vol: 0.22, delay: d }));
+      // big chord at the end
+      [523, 659, 784, 1047].forEach((f) =>
+        blip({ freq: f, type: "triangle", dur: 0.6, vol: 0.16, delay: 1.0 }));
+    },
   };
 })();
 
