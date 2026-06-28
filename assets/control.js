@@ -1,6 +1,6 @@
 // ── control.js — moderator surface ────────────────────────────────────────
 import {
-  ROUND_LABELS, FINAL_QUESTIONS, SONGS, POINTS_PER_CORRECT, uid, mmss, makeChannel,
+  ROUND_LABELS, FINAL_QUESTIONS, POINTS_PER_CORRECT, uid, mmss, makeChannel,
   loadQuestions, saveQuestions, loadTeams, saveTeams, escapeHtml,
 } from "./shared.js";
 
