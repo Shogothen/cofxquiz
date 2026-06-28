@@ -27,9 +27,7 @@ let finalIndex = -1; // -1 = intro screen (no question yet)
 let finalRevealed = false;
 let finalTeams = [null, null]; // ids of the two finalists
 
-// ── guess-the-song state ──
-let songIndex = 0;
-let songRevealed = false;
+// ── guess-the-song state (songs are normal questions with an `audio` field) ──
 let songPlaying = false;
 
 // ── dom ──
@@ -66,15 +64,6 @@ function snapshot() {
   if (screen === "ambient") {
     return { screen: "ambient", timer };
   }
-  if (screen === "song") {
-    const sg = SONGS[songIndex] || { title: "", artist: "", trackUrl: "" };
-    return {
-      screen: "song", timer,
-      songIndex, songTotal: SONGS.length,
-      songPlaying, songRevealed,
-      songTitle: sg.title, songArtist: sg.artist, songLink: sg.trackUrl || "",
-    };
-  }
   // question flow: start / round-intro / question
   if (mainStage === "start") {
     return { screen: "start", timer };
@@ -82,9 +71,13 @@ function snapshot() {
   if (mainStage === "round-intro") {
     return { screen: "round-intro", timer, roundIndex: introRound };
   }
+  const cq = cur();
   return {
     screen: "question", teams, question: activeQ(), answer: activeA(), img: activeImg(),
     roundIndex, timer, revealed,
+    isSong: !!cq.audio,          // this question is a "guess the song" item
+    songPlaying,                  // whether audio is currently playing
+    songLink: cq.trackUrl || "",  // apple music link, shown on reveal
   };
 }
 function broadcast() { chan.post({ type: "state", state: snapshot() }); }
@@ -103,11 +96,13 @@ function renderPresets() {
 }
 function renderCurrent() {
   const btn = $("btn-reveal");
+  const playBtn = $("song-play");
   if (screen === "question" && mainStage === "start") {
     $("q-count").textContent = "Start";
     $("cur-q").textContent = "— start screen — press Next › to begin";
     $("cur-a").textContent = "—";
     btn.disabled = true; btn.style.opacity = "0.4";
+    if (playBtn) playBtn.style.display = "none";
     return;
   }
   if (screen === "question" && mainStage === "round-intro") {
@@ -115,15 +110,23 @@ function renderCurrent() {
     $("cur-q").textContent = `— round intro: ${ROUND_LABELS[introRound] || "Round"} — press Next › for Q1`;
     $("cur-a").textContent = "—";
     btn.disabled = true; btn.style.opacity = "0.4";
+    if (playBtn) playBtn.style.display = "none";
     return;
   }
   btn.disabled = false; btn.style.opacity = "1";
   $("q-count").textContent = `${qIndex + 1} / ${questions.length}`;
+  const cq = cur();
   const img = activeImg();
-  $("cur-q").textContent = (img ? "🖼 " : "") + (activeQ() || "—");
+  const isSong = !!cq.audio;
+  $("cur-q").textContent = (isSong ? "🎵 " : img ? "🖼 " : "") + (activeQ() || "—");
   $("cur-a").textContent = activeA() || "—";
   btn.textContent = revealed ? "Hide answer" : "Reveal answer on screen";
   btn.classList.toggle("on", revealed);
+  // song play button: show only on song questions
+  if (playBtn) {
+    playBtn.style.display = isSong ? "block" : "none";
+    playBtn.textContent = songPlaying ? "■ Stop song" : "▶ Play song";
+  }
 }
 function renderTimer() {
   const d = $("timer-display");
@@ -136,20 +139,7 @@ function renderScreenSeg() {
     b.classList.toggle("on", b.dataset.screen === screen));
   // show the final control panel only when in final mode
   $("final-section").style.display = screen === "final" ? "" : "none";
-  $("song-section").style.display = screen === "song" ? "" : "none";
   if (screen === "final") renderFinal();
-  if (screen === "song") renderSong();
-}
-
-function renderSong() {
-  const sg = SONGS[songIndex] || { title: "", artist: "", previewUrl: "" };
-  $("song-cur-num").textContent = `Song ${songIndex + 1} / ${SONGS.length}`;
-  $("song-cur-ans").textContent = sg.title ? `${sg.title} — ${sg.artist}` : "—";
-  $("song-play").textContent = songPlaying ? "■ Stop" : "▶ Play";
-  const rb = $("song-reveal-btn");
-  rb.textContent = songRevealed ? "Hide title" : "Reveal title on screen";
-  rb.classList.toggle("on", songRevealed);
-  $("song-warn").textContent = sg.previewUrl ? "" : "⚠ No audio URL set for this song yet.";
 }
 
 function renderFinalSelects() {
@@ -210,11 +200,15 @@ function setQuestion(i) {
   revealed = false; overrideQ = ""; overrideA = "";
   const oq = $("override-q"), oa = $("override-a");
   if (oq) oq.value = ""; if (oa) oa.value = "";
+  // moving to a new question always stops any song audio from the previous one
+  stopSongAudio();
+  const isSong = !!cur().audio;
   // reset the timer to default if auto-reset is enabled
   const autoReset = $("timer-autoreset") ? $("timer-autoreset").checked : true;
   if (autoReset) { stopTimer(); timer = DEFAULT_TIMER; }
-  // auto-start the timer whenever we land on a question
-  startTimer();
+  // auto-start the timer on normal questions, but NOT on song questions
+  // (on songs you play the clip first, then start timing by hand)
+  if (!isSong) startTimer();
 }
 
 function goNext() {
@@ -307,15 +301,10 @@ function stopTimer() {
 $("seg-screen").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-screen]");
   if (!b) return;
-  const prev = screen;
   screen = b.dataset.screen;
-  // leaving the song screen → stop any playing audio
-  if (prev === "song" && screen !== "song") {
-    const a = $("song-audio"); if (a) a.pause();
-    songPlaying = false;
-  }
+  // leaving the quiz view → stop any playing song audio
+  if (screen !== "question") stopSongAudio();
   if (screen === "final") { renderFinalSelects(); stopTimer(); finalIndex = -1; finalRevealed = false; }
-  if (screen === "song") { stopTimer(); songRevealed = false; songPlaying = false; }
   renderScreenSeg(); broadcast();
 });
 
@@ -334,36 +323,26 @@ $("final-award-b").addEventListener("click", () => {
   if (t) { t.score += POINTS_PER_CORRECT; saveTeams(teams); renderFinal(); broadcast(); }
 });
 
-// ── guess-the-song events (audio plays in THIS control window) ──
+// ── guess-the-song: audio plays in THIS control window, tied to the current question ──
 const songAudio = $("song-audio");
-function stopSong() {
-  songAudio.pause();
+function stopSongAudio() {
+  const a = document.getElementById("song-audio");
+  if (a) a.pause();
   songPlaying = false;
-  renderSong(); broadcast();
-}
-function loadSong() {
-  const sg = SONGS[songIndex];
-  songRevealed = false; songPlaying = false;
-  songAudio.pause();
-  songAudio.src = sg && sg.previewUrl ? sg.previewUrl : "";
-  renderSong(); broadcast();
 }
 $("song-play").addEventListener("click", () => {
-  const sg = SONGS[songIndex];
-  if (!sg || !sg.previewUrl) { $("song-warn").textContent = "⚠ No audio URL set for this song yet."; return; }
-  if (songPlaying) { stopSong(); return; }
-  if (songAudio.src !== sg.previewUrl) songAudio.src = sg.previewUrl;
+  const sg = cur();
+  if (!sg || !sg.audio) return;
+  if (songPlaying) { stopSongAudio(); renderCurrent(); broadcast(); return; }
+  if (songAudio.src !== sg.audio) songAudio.src = sg.audio;
   songAudio.currentTime = 0;
   songAudio.play().then(() => {
-    songPlaying = true; renderSong(); broadcast();
-  }).catch((err) => {
-    $("song-warn").textContent = "⚠ Playback blocked — click anywhere on this page first, then Play.";
+    songPlaying = true; renderCurrent(); broadcast();
+  }).catch(() => {
+    $("song-play").textContent = "▶ Click again to play";
   });
 });
-songAudio.addEventListener("ended", () => { songPlaying = false; renderSong(); broadcast(); });
-$("song-prev").addEventListener("click", () => { songIndex = Math.max(0, songIndex - 1); loadSong(); });
-$("song-next").addEventListener("click", () => { songIndex = Math.min(SONGS.length - 1, songIndex + 1); loadSong(); });
-$("song-reveal-btn").addEventListener("click", () => { songRevealed = !songRevealed; renderSong(); broadcast(); });
+songAudio.addEventListener("ended", () => { songPlaying = false; renderCurrent(); broadcast(); });
 $("round-chips").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-round]");
   if (!b) return;

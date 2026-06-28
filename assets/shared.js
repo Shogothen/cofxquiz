@@ -6,6 +6,7 @@ export const ROUND_LABELS = [
   "Screens & Streaming",
   "Picture Round",
   "Around the World",
+  "Guess the Song",
   "Brain Stretch",
 ];
 
@@ -70,15 +71,29 @@ export const DEFAULT_QUESTIONS = [
   { round: 4, q: "Which platform popularised the 'For You Page' (FYP)?", a: "TikTok" },
   { round: 4, q: "Which 2016 mobile game had people walking around catching creatures?", a: "Pokémon Go" },
 
-  // ── Round 6 · Brain Stretch (hardest before the final) ──
-  { round: 5, q: "What is the most abundant element in the universe?", a: "Hydrogen" },
-  { round: 5, q: "In which year did the Chernobyl disaster occur?", a: "1986" },
-  { round: 5, q: "What 'P' is the powerhouse of the cell?", a: "Mitochondria" },
-  { round: 5, q: "Who painted 'The Starry Night'?", a: "Van Gogh" },
-  { round: 5, q: "How many hearts does an octopus have?", a: "Three" },
-  { round: 5, q: "What's the only even prime number?", a: "Two" },
-  { round: 5, q: "Which scientist proposed the three laws of motion?", a: "Newton" },
-  { round: 5, q: "The 'Mona Lisa' hangs in which museum?", a: "Louvre" },
+  // ── Round 6 · Guess the Song (audio questions; play preview, then reveal) ──
+  { round: 5, q: "Guess the song", a: "Blinding Lights — The Weeknd",
+    audio: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/17/b4/8f/17b48f9a-0b93-6bb8-fe1d-3a16623c2cfb/mzaf_9560252727299052414.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/blinding-lights/1488408555?i=1488408568&uo=4" },
+  { round: 5, q: "Guess the song", a: "Don't Stop Me Now — Queen",
+    audio: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6a/ec/92/6aec920f-5a05-d93b-ceaa-7de19cdbae88/mzaf_6658285650704260274.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/dont-stop-me-now/1440650428?i=1440650733&uo=4" },
+  { round: 5, q: "Guess the song", a: "Dancing Queen — ABBA",
+    audio: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1a/47/93/1a4793fc-1586-87bc-00d2-dc4916a61c7c/mzaf_13920610926910283055.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/dancing-queen/1422648512?i=1422648513&uo=4" },
+  { round: 5, q: "Guess the song", a: "Eye of the Tiger — Survivor",
+    audio: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/fe/fa/9e/fefa9edd-c023-4d1c-1012-08bfb0ec69e6/mzaf_4651653238471209843.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/eye-of-the-tiger/254685010?i=254685026&uo=4" },
+
+  // ── Round 7 · Brain Stretch (hardest before the final) ──
+  { round: 6, q: "What is the most abundant element in the universe?", a: "Hydrogen" },
+  { round: 6, q: "In which year did the Chernobyl disaster occur?", a: "1986" },
+  { round: 6, q: "What 'P' is the powerhouse of the cell?", a: "Mitochondria" },
+  { round: 6, q: "Who painted 'The Starry Night'?", a: "Van Gogh" },
+  { round: 6, q: "How many hearts does an octopus have?", a: "Three" },
+  { round: 6, q: "What's the only even prime number?", a: "Two" },
+  { round: 6, q: "Which scientist proposed the three laws of motion?", a: "Newton" },
+  { round: 6, q: "The 'Mona Lisa' hangs in which museum?", a: "Louvre" },
 ];
 
 // ── Final round (buzzer, spoken answers, fast — harder set) ──

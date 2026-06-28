@@ -122,11 +122,13 @@ function render(s) {
   const isScore = sc === "scoreboard";
   const isQuestion = sc === "question";
   const isAmbient = sc === "ambient";
-  const isSong = sc === "song";
 
   // detect a fresh screen entry (so one-liners/facts only change on entry)
   const screenChanged = sc !== _lastScreen;
   _lastScreen = sc;
+
+  // a question can be a "guess the song" item (has audio)
+  const isSong = isQuestion && !!s.isSong;
 
   // toggle all views
   el.startview.classList.toggle("show", isStart);
@@ -136,16 +138,17 @@ function render(s) {
   el.scoreview.classList.toggle("show", isScore);
   el.ambientview.classList.toggle("show", isAmbient);
   el.songview.classList.toggle("show", isSong);
-  el.qview.style.display = isQuestion ? "grid" : "none";
-  el.roundtag.style.visibility = isQuestion ? "visible" : "hidden";
+  el.qview.style.display = (isQuestion && !isSong) ? "grid" : "none";
+  el.roundtag.style.visibility = (isQuestion && !isSong) ? "visible" : "hidden";
 
-  // guess the song
+  // guess the song (a question with audio) → show equalizer view
   if (isSong) {
-    el.songCounter.textContent = `Song ${(s.songIndex ?? 0) + 1} / ${s.songTotal ?? 0}`;
+    el.songCounter.textContent = s.songPlaying ? "♪ Now playing…" : "Listen carefully";
     el.equalizer.classList.toggle("playing", !!s.songPlaying);
-    el.songReveal.classList.toggle("show", !!s.songRevealed);
-    el.songTitle.textContent = s.songTitle || "";
-    el.songArtist.textContent = s.songArtist || "";
+    el.songReveal.classList.toggle("show", !!s.revealed);
+    const parts = (s.answer || "").split(" — ");
+    el.songTitle.textContent = parts[0] || "";
+    el.songArtist.textContent = parts[1] || "";
     if (s.songLink) { el.songLink.textContent = "▸ Listen on Apple Music"; el.songLink.href = s.songLink; }
     else el.songLink.textContent = "";
     return;

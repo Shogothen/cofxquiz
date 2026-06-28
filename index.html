@@ -24,7 +24,6 @@
         <div class="seg" id="seg-screen">
           <button data-screen="question" class="on">Quiz</button>
           <button data-screen="scoreboard">Scoreboard</button>
-          <button data-screen="song">Songs</button>
           <button data-screen="final">Final</button>
           <button data-screen="winner">Winner</button>
           <button data-screen="ambient">Break</button>
@@ -52,7 +51,9 @@
           <p class="cur-q" id="cur-q">—</p>
           <p class="cur-a">Answer · <b id="cur-a">—</b></p>
         </div>
+        <button class="pill-dark" id="song-play" style="display:none;width:100%;margin-bottom:8px">▶ Play song</button>
         <button class="reveal-btn" id="btn-reveal">Reveal answer on screen</button>
+        <audio id="song-audio" preload="none"></audio>
       </div>
 
       <!-- Timer -->
@@ -70,24 +71,6 @@
           <input type="checkbox" id="timer-autoreset" checked />
           <span>Reset timer on each new question</span>
         </label>
-      </div>
-
-      <!-- Guess the Song -->
-      <div class="section" id="song-section" style="display:none">
-        <div class="section-title">Guess the Song</div>
-        <div class="cur-box">
-          <span class="mini">Now on screen</span>
-          <p class="cur-q" id="song-cur"><b id="song-cur-num">Song 1 / 4</b></p>
-          <p class="cur-a">Answer · <b id="song-cur-ans">—</b></p>
-        </div>
-        <div class="qnav" style="margin-top:12px">
-          <button class="pill-white" id="song-prev">‹ Prev</button>
-          <button class="pill-dark" id="song-play">▶ Play</button>
-          <button class="pill-white" id="song-next">Next ›</button>
-        </div>
-        <button class="reveal-btn" id="song-reveal-btn" style="margin-top:10px">Reveal title on screen</button>
-        <p class="mini" id="song-warn" style="margin-top:10px;color:var(--o3)"></p>
-        <audio id="song-audio" preload="none"></audio>
       </div>
 
       <!-- Teams -->
