@@ -75,6 +75,13 @@ const el = {
   winnerRunnerup: document.getElementById("b-winner-runnerup"),
   ambientview: document.getElementById("b-ambientview"),
   ambientFact: document.getElementById("b-ambient-fact"),
+  songview: document.getElementById("b-songview"),
+  equalizer: document.getElementById("b-equalizer"),
+  songCounter: document.getElementById("b-song-counter"),
+  songReveal: document.getElementById("b-song-reveal"),
+  songTitle: document.getElementById("b-song-title"),
+  songArtist: document.getElementById("b-song-artist"),
+  songLink: document.getElementById("b-song-link"),
   bubbleStart: document.getElementById("b-bubble-start"),
   bubbleRound: document.getElementById("b-bubble-round"),
   bubbleWinner: document.getElementById("b-bubble-winner"),
@@ -115,6 +122,7 @@ function render(s) {
   const isScore = sc === "scoreboard";
   const isQuestion = sc === "question";
   const isAmbient = sc === "ambient";
+  const isSong = sc === "song";
 
   // detect a fresh screen entry (so one-liners/facts only change on entry)
   const screenChanged = sc !== _lastScreen;
@@ -127,8 +135,21 @@ function render(s) {
   el.finalview.classList.toggle("show", isFinal);
   el.scoreview.classList.toggle("show", isScore);
   el.ambientview.classList.toggle("show", isAmbient);
+  el.songview.classList.toggle("show", isSong);
   el.qview.style.display = isQuestion ? "grid" : "none";
   el.roundtag.style.visibility = isQuestion ? "visible" : "hidden";
+
+  // guess the song
+  if (isSong) {
+    el.songCounter.textContent = `Song ${(s.songIndex ?? 0) + 1} / ${s.songTotal ?? 0}`;
+    el.equalizer.classList.toggle("playing", !!s.songPlaying);
+    el.songReveal.classList.toggle("show", !!s.songRevealed);
+    el.songTitle.textContent = s.songTitle || "";
+    el.songArtist.textContent = s.songArtist || "";
+    if (s.songLink) { el.songLink.textContent = "▸ Listen on Apple Music"; el.songLink.href = s.songLink; }
+    else el.songLink.textContent = "";
+    return;
+  }
 
   // ambient fact rotation: start when entering, stop when leaving
   if (isAmbient) {

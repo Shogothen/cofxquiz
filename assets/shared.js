@@ -105,6 +105,24 @@ export const FINAL_QUESTIONS = [
 
 export const POINTS_PER_CORRECT = 1;
 
+// ── Guess the Song round (Apple Music 30s previews) ───────────────────────
+// previewUrl: paste the iTunes preview URL (ends in .m4a). Leave "" to disable a slot.
+// trackUrl: optional Apple Music link shown on the beamer (keeps it close to a store badge).
+export const SONGS = [
+  { title: "Blinding Lights", artist: "The Weeknd",
+    previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/17/b4/8f/17b48f9a-0b93-6bb8-fe1d-3a16623c2cfb/mzaf_9560252727299052414.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/blinding-lights/1488408555?i=1488408568&uo=4" },
+  { title: "Don't Stop Me Now", artist: "Queen",
+    previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6a/ec/92/6aec920f-5a05-d93b-ceaa-7de19cdbae88/mzaf_6658285650704260274.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/dont-stop-me-now/1440650428?i=1440650733&uo=4" },
+  { title: "Dancing Queen", artist: "ABBA",
+    previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1a/47/93/1a4793fc-1586-87bc-00d2-dc4916a61c7c/mzaf_13920610926910283055.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/dancing-queen/1422648512?i=1422648513&uo=4" },
+  { title: "Eye of the Tiger", artist: "Survivor",
+    previewUrl: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/fe/fa/9e/fefa9edd-c023-4d1c-1012-08bfb0ec69e6/mzaf_4651653238471209843.plus.aac.p.m4a",
+    trackUrl: "https://music.apple.com/us/album/eye-of-the-tiger/254685010?i=254685026&uo=4" },
+];
+
 // ── Host one-liners (sassy quizmaster) shown in a speech bubble ────────────
 export const HOST_LINES = {
   start: [

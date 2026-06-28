@@ -164,6 +164,33 @@
       letter-spacing: -0.02em; margin: 0; max-width: 18ch; position: relative; z-index: 2;
       animation: factFade .6s ease; }
     @keyframes factFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    /* guess the song */
+    .b-equalizer { display: flex; align-items: flex-end; justify-content: center;
+      gap: min(1.4vw, 14px); height: min(28vh, 240px); margin: min(3vh,24px) 0; }
+    .b-equalizer span { width: min(2.4vw, 26px); height: 20%; border-radius: 8px;
+      background: var(--grad); opacity: 0.85; }
+    .b-equalizer.playing span { animation: eq 0.9s ease-in-out infinite; }
+    .b-equalizer span:nth-child(1) { animation-delay: -0.1s; }
+    .b-equalizer span:nth-child(2) { animation-delay: -0.5s; }
+    .b-equalizer span:nth-child(3) { animation-delay: -0.3s; }
+    .b-equalizer span:nth-child(4) { animation-delay: -0.7s; }
+    .b-equalizer span:nth-child(5) { animation-delay: -0.2s; }
+    .b-equalizer span:nth-child(6) { animation-delay: -0.6s; }
+    .b-equalizer span:nth-child(7) { animation-delay: -0.4s; }
+    .b-equalizer span:nth-child(8) { animation-delay: -0.8s; }
+    .b-equalizer span:nth-child(9) { animation-delay: -0.15s; }
+    .b-equalizer span:nth-child(10) { animation-delay: -0.55s; }
+    @keyframes eq { 0%, 100% { height: 18%; } 50% { height: 100%; } }
+    .b-song-counter { font-size: clamp(14px, 1.6vw, 22px); color: var(--muted); letter-spacing: 0.1em; }
+    .b-song-reveal { display: none; flex-direction: column; align-items: center; gap: 6px;
+      margin-top: min(3vh, 26px); animation: answerPop .42s cubic-bezier(.2,.8,.3,1.4); }
+    .b-song-reveal.show { display: flex; }
+    .b-song-title { font-weight: 800; font-size: clamp(32px, 4.5vw, 68px); letter-spacing: -0.02em; line-height: 1.05; }
+    .b-song-artist { font-weight: 600; font-size: clamp(18px, 2.2vw, 30px); color: var(--muted); }
+    .b-song-link { margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: clamp(11px,1.1vw,14px);
+      color: var(--o2); text-decoration: none; opacity: 0.8; }
+    .b-song-link:empty { display: none; }
     .b-trophy { font-size: clamp(60px, 10vw, 140px); line-height: 1;
       animation: trophyPop .7s cubic-bezier(.2,.8,.3,1.5) both; transform-origin: center bottom; }
     @keyframes trophyPop {
@@ -277,6 +304,22 @@
       <span class="b-intro-kicker grad-text">Did you know?</span>
       <p class="b-ambient-fact" id="b-ambient-fact">—</p>
       <p class="b-intro-sub">Back in a moment. Grab a drink.</p>
+    </div>
+
+    <!-- guess the song screen -->
+    <div class="b-intro" id="b-songview">
+      <span class="b-intro-kicker grad-text">Guess the Song</span>
+      <div class="b-equalizer" id="b-equalizer">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="b-song-counter mono" id="b-song-counter">Song 1 / 4</div>
+      <div class="b-song-reveal" id="b-song-reveal">
+        <span class="b-answer-label">Answer</span>
+        <span class="b-song-title grad-text" id="b-song-title"></span>
+        <span class="b-song-artist" id="b-song-artist"></span>
+        <a class="b-song-link" id="b-song-link" target="_blank" rel="noopener"></a>
+      </div>
     </div>
 
     <!-- question view -->
