@@ -6,8 +6,48 @@ let _scoreVisible = false; // tracks whether scoreboard is currently shown (for 
 let _lastScreen = null;    // tracks screen changes so one-liners only reroll on entry
 let _winnerMode = null;    // 'tie' | 'solo' — so the winner line matches the actual result
 let _ambientTimer = null;  // rotates ambient facts
+// sound-trigger tracking
+let _sndQ = null;          // last question text (for new-question cue)
+let _sndRevealed = false;  // last reveal state
+let _sndScoreTotal = 0;    // last sum of all scores (for point cue)
+let _sndFinalRevealed = false;
+let _sndFinalTotal = 0;
+let _sndWinnerFired = false;
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// ── sound engine (Web Audio, synthesised — no files) ──────────────────────
+const sound = (() => {
+  let ctx = null, enabled = false;
+  function ensure() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ctx && ctx.state === "suspended") ctx.resume();
+  }
+  function tone(freq, dur, type, vol, delay) {
+    if (!enabled || !ctx) return;
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  return {
+    enable() { ensure(); enabled = true; },
+    disable() { enabled = false; },
+    isOn() { return enabled; },
+    // distinct cues
+    question() { tone(523, 0.12, "sine", 0.14); },                         // soft blip on new question
+    reveal()   { tone(660, 0.14, "triangle", 0.18); tone(990, 0.22, "sine", 0.16, 0.08); }, // ding-up
+    point()    { tone(880, 0.08, "square", 0.12); },                       // crisp tick for a point
+    buzz()     { tone(160, 0.25, "sawtooth", 0.2); },                      // final buzzer
+    fanfare()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.3, "triangle", 0.2, i * 0.12)); },
+  };
+})();
 
 // ── confetti engine (canvas, no dependencies) ─────────────────────────────
 const confetti = (() => {
@@ -129,6 +169,33 @@ function render(s) {
 
   // a question can be a "guess the song" item (has audio)
   const isSong = isQuestion && !!s.isSong;
+
+  // ── sound cues (only fire on the relevant change) ──
+  if (sound.isOn()) {
+    // main-quiz points: total team score went up
+    if (s.teams && (isQuestion || isScore)) {
+      const total = s.teams.reduce((a, t) => a + (t.score || 0), 0);
+      if (total > _sndScoreTotal) sound.point();
+      _sndScoreTotal = total;
+    }
+    if (isQuestion) {
+      if (s.question && s.question !== _sndQ) { sound.question(); _sndQ = s.question; }
+      if (s.revealed && !_sndRevealed) sound.reveal();
+      _sndRevealed = !!s.revealed;
+    } else { _sndQ = null; _sndRevealed = false; }
+    if (isFinal) {
+      // final points are scored separately
+      const ft = (s.finalScoreA || 0) + (s.finalScoreB || 0);
+      if (ft > _sndFinalTotal) sound.point();
+      _sndFinalTotal = ft;
+      if (s.finalRevealed && !_sndFinalRevealed) sound.reveal();
+      _sndFinalRevealed = !!s.finalRevealed;
+    } else { _sndFinalRevealed = false; _sndFinalTotal = 0; }
+    if (isWinner) {
+      const hasWinner = s.finalPlayed || (s.teams || []).some((t) => t.score > 0);
+      if (hasWinner && !_sndWinnerFired) { sound.fanfare(); _sndWinnerFired = true; }
+    } else { _sndWinnerFired = false; }
+  }
 
   // toggle all views
   el.startview.classList.toggle("show", isStart);
@@ -350,6 +417,23 @@ function renderScores(teams, animate) {
 chan.on((msg) => {
   if (msg.type === "state") render(msg.state);
 });
+
+// sound toggle (must be clicked once to satisfy browser autoplay policy)
+const soundBtn = document.getElementById("b-sound-toggle");
+if (soundBtn) {
+  soundBtn.addEventListener("click", () => {
+    if (sound.isOn()) {
+      sound.disable();
+      soundBtn.textContent = "🔇 Enable sound";
+      soundBtn.classList.remove("on");
+    } else {
+      sound.enable();
+      soundBtn.textContent = "🔊 Sound on";
+      soundBtn.classList.add("on");
+      sound.reveal(); // little confirmation chirp
+    }
+  });
+}
 
 // ask control to send current state (in case beamer opened after control)
 chan.post({ type: "request" });

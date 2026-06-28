@@ -179,7 +179,7 @@ function renderTeams() {
     .map((t, i) => {
       const lead = i === 0 && t.score > 0;
       return `
-      <div class="team-row ${lead ? "lead" : ""}">
+      <div class="team-row ${lead ? "lead" : ""}" data-teamrow="${t.id}">
         <span class="team-score">${t.score}</span>
         <input class="team-name-input" data-rename="${t.id}" value="${escapeHtml(t.name)}" />
         <div class="team-actions">
@@ -385,10 +385,16 @@ function addTeam() {
 $("team-list").addEventListener("click", (e) => {
   const a = e.target.closest("button");
   if (!a) return;
-  if (a.dataset.award) teams = teams.map((t) => t.id === a.dataset.award ? { ...t, score: t.score + POINTS_PER_CORRECT } : t);
-  if (a.dataset.deduct) teams = teams.map((t) => t.id === a.dataset.deduct ? { ...t, score: Math.max(0, t.score - POINTS_PER_CORRECT) } : t);
+  let flashId = null;
+  if (a.dataset.award) { teams = teams.map((t) => t.id === a.dataset.award ? { ...t, score: t.score + POINTS_PER_CORRECT } : t); flashId = a.dataset.award; }
+  if (a.dataset.deduct) { teams = teams.map((t) => t.id === a.dataset.deduct ? { ...t, score: Math.max(0, t.score - POINTS_PER_CORRECT) } : t); flashId = a.dataset.deduct; }
   if (a.dataset.remove) teams = teams.filter((t) => t.id !== a.dataset.remove);
   renderTeams(); saveTeams(teams); broadcast();
+  // flash the team's score so it's obvious the click landed (buttons re-render, so flash the number)
+  if (flashId) {
+    const row = document.querySelector(`[data-teamrow="${flashId}"] .team-score`);
+    if (row) { row.classList.remove("flash-score"); void row.offsetWidth; row.classList.add("flash-score"); }
+  }
 });
 // inline rename — save on blur or Enter, so typing isn't interrupted by re-renders
 $("team-list").addEventListener("change", (e) => {
@@ -490,6 +496,18 @@ document.addEventListener("keydown", (e) => {
   if (e.code === "ArrowLeft") goPrev();
   if (e.key.toLowerCase() === "a") { revealed = !revealed; renderCurrent(); broadcast(); }
   if (e.key.toLowerCase() === "s") { screen = screen === "scoreboard" ? "question" : "scoreboard"; renderScreenSeg(); broadcast(); }
+});
+
+// ── visual click feedback: flash key action buttons so it's obvious the click landed ──
+document.addEventListener("click", (e) => {
+  // note: team +/− buttons re-render, so they flash the SCORE instead (handled in team-list handler)
+  const btn = e.target.closest(
+    "#btn-reveal, #final-reveal, #final-award-a, #final-award-b, #song-play, .reveal-btn"
+  );
+  if (!btn) return;
+  btn.classList.remove("flash");
+  void btn.offsetWidth; // restart animation
+  btn.classList.add("flash");
 });
 
 // ── init ──
